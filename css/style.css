@@ -1,0 +1,64 @@
+:root {
+  --bg: #f6f4ef; --kart: #ffffff; --cizgi: #e5e0d6; --yazi: #1d1a16; --soluk: #6f685d;
+  --sari: #f2b300; --kirmizi: #a90432; --vurgu: #a90432; --yesil: #1f8a52;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #121110; --kart: #1c1a18; --cizgi: #2e2b27; --yazi: #efeae2; --soluk: #a39b8f; --vurgu: #ffc425; --yesil: #5fcf8f; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--yazi); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.ust { background: linear-gradient(100deg, var(--kirmizi), #7d0225 60%, #5c021b); color: #fff; }
+.ust-ic { max-width: 1100px; margin: 0 auto; padding: 20px 16px; display: flex; gap: 14px; align-items: center; }
+.logo { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display: flex; transform: rotate(-30deg); box-shadow: 0 0 0 3px rgba(255,255,255,.25); flex: none; }
+.logo span { flex: 1; } .logo .sari { background: var(--sari); } .logo .kirmizi { background: #c8102e; }
+h1 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+.alt { margin: 2px 0 0; opacity: .8; font-size: 13px; }
+.kap { max-width: 1100px; margin: 0 auto; padding: 18px 16px 48px; }
+
+.arac { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.alan { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--soluk); font-weight: 600; }
+.alan.genis { flex: 1 1 240px; }
+select, input { font: inherit; color: var(--yazi); background: var(--kart); border: 1px solid var(--cizgi); border-radius: 10px; padding: 10px 12px; min-width: 140px; }
+select:focus, input:focus { outline: 2px solid var(--vurgu); outline-offset: 1px; }
+
+.ozet { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.stat { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 12px; padding: 12px 14px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--soluk); }
+
+.grup { margin-bottom: 22px; }
+.grup h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--vurgu); }
+table { width: 100%; border-collapse: collapse; background: var(--kart); border: 1px solid var(--cizgi); border-radius: 12px; overflow: hidden; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--cizgi); white-space: nowrap; }
+th { font-size: 12px; color: var(--soluk); font-weight: 600; background: color-mix(in srgb, var(--kart) 85%, var(--cizgi)); }
+tr:last-child td { border-bottom: 0; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: color-mix(in srgb, var(--kart) 90%, var(--vurgu)); }
+td.no { width: 44px; color: var(--soluk); font-variant-numeric: tabular-nums; }
+td.ad b { display: block; } td.ad small { color: var(--soluk); }
+.sag { text-align: right; font-variant-numeric: tabular-nums; }
+
+.bilgi { background: var(--kart); border: 1px dashed var(--cizgi); border-radius: 12px; padding: 22px; color: var(--soluk); text-align: center; }
+.bilgi code { background: var(--bg); padding: 2px 6px; border-radius: 6px; }
+
+dialog { border: 0; border-radius: 16px; padding: 0; width: min(640px, calc(100vw - 32px)); background: var(--kart); color: var(--yazi); }
+dialog::backdrop { background: rgba(0,0,0,.5); }
+.detay-bas { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--cizgi); }
+.detay-bas h2 { margin: 0; font-size: 18px; }
+.kapat { border: 0; background: none; color: var(--soluk); font-size: 26px; cursor: pointer; line-height: 1; }
+#detay-govde { padding: 16px 18px 20px; max-height: 70vh; overflow: auto; }
+.etiketler { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.etiket { background: var(--bg); border: 1px solid var(--cizgi); border-radius: 99px; padding: 3px 10px; font-size: 13px; }
+a { color: var(--vurgu); }
+
+/* Telefonda tablo kart görünümüne geçer */
+@media (max-width: 680px) {
+  thead { display: none; }
+  table, tbody, tr, td { display: block; width: 100%; }
+  tr { border-bottom: 1px solid var(--cizgi); padding: 8px 0; }
+  td { border: 0; padding: 3px 12px; white-space: normal; }
+  td[data-k]::before { content: attr(data-k) ": "; color: var(--soluk); font-size: 12px; }
+  td.no { display: inline-block; width: auto; }
+  td.ad { display: inline-block; width: auto; }
+  .sag { text-align: left; }
+}

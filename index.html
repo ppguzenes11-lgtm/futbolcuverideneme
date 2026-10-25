@@ -3,18 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Futbolcu Veri Deneme</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #111814; color: #e8efe9; margin: 0; padding: 24px 16px; }
-    h1 { font-size: 22px; }
-    #durum { padding: 12px 14px; border-radius: 10px; background: #1c2620; }
-    #durum.ok { color: #6fd39a; }
-    #durum.hata { color: #f08a7a; }
-  </style>
+  <title>Galatasaray Kadroları</title>
+  <meta name="description" content="2000/01 sezonundan bugüne Galatasaray kadroları">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Futbolcu Veri Deneme</h1>
-  <p id="durum">Supabase'e bağlanılıyor…</p>
+  <header class="ust">
+    <div class="ust-ic">
+      <div class="logo"><span class="sari"></span><span class="kirmizi"></span></div>
+      <div>
+        <h1>Galatasaray Kadroları</h1>
+        <p class="alt">2000/01 sezonundan bugüne · Transfermarkt verisi</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="kap">
+    <section class="arac">
+      <label class="alan">
+        <span>Sezon</span>
+        <select id="sezon"></select>
+      </label>
+      <label class="alan genis">
+        <span>Oyuncu ara (tüm sezonlar)</span>
+        <input id="ara" type="search" placeholder="Örn. Hagi, Muslera…" autocomplete="off">
+      </label>
+    </section>
+
+    <section class="ozet" id="ozet"></section>
+    <section id="icerik"><div class="bilgi">Yükleniyor…</div></section>
+  </main>
+
+  <dialog id="detay">
+    <div class="detay-bas">
+      <h2 id="detay-ad"></h2>
+      <button class="kapat" id="detay-kapat" aria-label="Kapat">×</button>
+    </div>
+    <div id="detay-govde"></div>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
