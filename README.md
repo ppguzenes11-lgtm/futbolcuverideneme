@@ -12,8 +12,11 @@ Yerelde çalıştırmak için: `npx serve .` (veya herhangi bir statik sunucu). 
 ## Galatasaray kadroları (Transfermarkt, 2000/01 → bugün)
 
 1. Supabase > SQL Editor'de `supabase/galatasaray_kadrolar.sql` dosyasını çalıştırın.
-2. `pip install -r requirements.txt`
-3. `python scripts/galatasaray_kadrolar.py --supabase`
+2. Bilgisayarda https://www.transfermarkt.com sayfasını açın, F12 > Console'a
+   `scripts/galatasaray_kadrolar_konsol.js` dosyasının içeriğini yapıştırıp Enter'a basın.
+   Kurulum gerekmez; veriler Supabase'e yazılır, ayrıca CSV olarak indirilir.
+
+Alternatif (Python): `pip install -r requirements.txt` ve `python scripts/galatasaray_kadrolar.py --supabase`
 
 Her sezon için kadro sayfası çekilir (sayfalar arası 3 sn beklenir), sonuç `data/galatasaray_kadrolar.csv/.json`
 dosyalarına ve `--supabase` ile `galatasaray_kadrolar` tablosuna yazılır. Belirli sezonlar için `--bas 2020 --bit 2021`.
