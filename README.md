@@ -20,3 +20,15 @@ Alternatif (Python): `pip install -r scripts/requirements.txt` ve `python script
 
 Her sezon için kadro sayfası çekilir (sayfalar arası 3 sn beklenir), sonuç `data/galatasaray_kadrolar.csv/.json`
 dosyalarına ve `--supabase` ile `galatasaray_kadrolar` tablosuna yazılır. Belirli sezonlar için `--bas 2020 --bit 2021`.
+
+## Futbol veritabanı (8 lig, 2000 → bugün)
+
+Ligler: Süper Lig, Premier League, LaLiga, Serie A, Bundesliga, Ligue 1, Liga Portugal, Eredivisie.
+
+**1. aşama — kulüpler ve oyuncu sezon istatistikleri**
+1. Supabase > SQL Editor'de `supabase/veritabani.sql` dosyasını çalıştırın.
+2. Bilgisayarda https://www.transfermarkt.com açın, F12 > Console'a `scripts/veritabani_konsol.js` içeriğini yapıştırıp Enter.
+3. Kod en yeni sezondan geriye doğru ilerler; doğrulama isterse ya da kapatırsanız tekrar çalıştırınca kaldığı yerden devam eder.
+4. Bitince SQL dosyasının sonundaki komutla yazma izinlerini kapatın.
+
+Tablolar: `ligler`, `kulupler`, `lig_kulupleri`, `oyuncular`, `oyuncu_sezonlari` (tüm turnuvalar toplamı), `cekilen_sayfalar`.
