@@ -21,6 +21,18 @@ const euro = (n) => {
   if (n >= 1e3) return `€${Math.round(n / 1e3).toLocaleString('tr-TR')} bin`;
   return `€${n}`;
 };
+// Transfermarkt 'geldiği kulüp' metni bedeli de içerir: 'Trabzonspor: Ablöse €30.00m' -> kulüp + Türkçe bedel
+const BEDEL = [['Leihgebühr', 'Kiralama bedeli'], ['Leih-Ende', 'Kiralık dönüşü'], ['Leihe', 'Kiralık'], ['ablösefrei', 'Bedelsiz'], ['Ablöse', 'Bonservis']];
+function gelis(metin) {
+  if (!metin) return { kulup: '-', bedel: '' };
+  const i = metin.indexOf(': ');
+  if (i < 0) return { kulup: metin, bedel: '' };
+  let bedel = metin.slice(i + 2).trim();
+  for (const [de, tr] of BEDEL) bedel = bedel.replace(de, tr);
+  return { kulup: metin.slice(0, i), bedel: bedel === '-' || bedel === '?' ? '' : bedel };
+}
+const gelisHtml = (metin) => { const g = gelis(metin); return `${esc(g.kulup)}${g.bedel ? ` <small class="bedel">${esc(g.bedel)}</small>` : ''}`; };
+
 const sezonAd = (s) => `${s}/${String(s + 1).slice(-2)}`;
 
 // Sezon listesi: 2000/01'den bu sezona (Temmuz'da yeni sezon başlar)
@@ -72,7 +84,7 @@ async function sezonGoster(sezon) {
             <td class="ad"><b>${esc(r.ad)}</b><small>${esc(mevki(r.mevki)[1])}</small></td>
             <td data-k="Yaş">${esc(r.yas ?? '-')}</td>
             <td data-k="Uyruk">${esc(r.uyruk || '-')}</td>
-            <td data-k="Geldiği kulüp">${esc(r.geldigi_kulup || '-')}</td>
+            <td data-k="Geldiği kulüp">${gelisHtml(r.geldigi_kulup)}</td>
             <td data-k="Değer" class="sag">${euro(r.piyasa_degeri_eur)}</td>
           </tr>`).join('')}
         </tbody>

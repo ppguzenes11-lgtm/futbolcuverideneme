@@ -35,7 +35,8 @@ tr:last-child td { border-bottom: 0; }
 tbody tr { cursor: pointer; }
 tbody tr:hover td { background: color-mix(in srgb, var(--kart) 90%, var(--vurgu)); }
 td.no { width: 44px; color: var(--soluk); font-variant-numeric: tabular-nums; }
-td.ad b { display: block; } td.ad small { color: var(--soluk); }
+td.ad b { display: block; }
+.bedel { display: block; color: var(--soluk); font-size: 12px; } td.ad small { color: var(--soluk); }
 .sag { text-align: right; font-variant-numeric: tabular-nums; }
 
 .bilgi { background: var(--kart); border: 1px dashed var(--cizgi); border-radius: 12px; padding: 22px; color: var(--soluk); text-align: center; }
