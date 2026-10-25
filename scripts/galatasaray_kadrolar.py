@@ -6,7 +6,7 @@ Transfermarkt'tan Galatasaray kadrolarını (2000/01 sezonundan bugüne) çeker.
 (önce supabase/galatasaray_kadrolar.sql çalıştırılmalı).
 
 Kullanım:
-  pip install -r requirements.txt
+  pip install -r scripts/requirements.txt
   python scripts/galatasaray_kadrolar.py                 # tüm sezonlar
   python scripts/galatasaray_kadrolar.py --bas 2020 --bit 2021
   python scripts/galatasaray_kadrolar.py --supabase

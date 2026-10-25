@@ -16,7 +16,7 @@ Yerelde çalıştırmak için: `npx serve .` (veya herhangi bir statik sunucu). 
    `scripts/galatasaray_kadrolar_konsol.js` dosyasının içeriğini yapıştırıp Enter'a basın.
    Kurulum gerekmez; veriler Supabase'e yazılır, ayrıca CSV olarak indirilir.
 
-Alternatif (Python): `pip install -r requirements.txt` ve `python scripts/galatasaray_kadrolar.py --supabase`
+Alternatif (Python): `pip install -r scripts/requirements.txt` ve `python scripts/galatasaray_kadrolar.py --supabase`
 
 Her sezon için kadro sayfası çekilir (sayfalar arası 3 sn beklenir), sonuç `data/galatasaray_kadrolar.csv/.json`
 dosyalarına ve `--supabase` ile `galatasaray_kadrolar` tablosuna yazılır. Belirli sezonlar için `--bas 2020 --bit 2021`.
