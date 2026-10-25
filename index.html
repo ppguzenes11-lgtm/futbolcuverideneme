@@ -3,32 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Galatasaray Kadroları</title>
-  <meta name="description" content="2000/01 sezonundan bugüne Galatasaray kadroları">
+  <title>Futbol Veritabanı</title>
+  <meta name="description" content="8 büyük ligin kulüpleri, kadroları ve oyuncu istatistikleri — Transfermarkt verisi">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="ust">
     <div class="ust-ic">
-      <div class="logo"><span class="sari"></span><span class="kirmizi"></span></div>
+      <div class="logo" aria-hidden="true">⚽</div>
       <div>
-        <h1>Galatasaray Kadroları</h1>
-        <p class="alt">2000/01 sezonundan bugüne · Transfermarkt verisi</p>
+        <h1>Futbol Veritabanı</h1>
+        <p class="alt">8 büyük lig · 2000/01'den bugüne · Transfermarkt verisi</p>
       </div>
     </div>
   </header>
 
   <main class="kap">
     <section class="arac">
-      <label class="alan">
-        <span>Sezon</span>
-        <select id="sezon"></select>
-      </label>
-      <label class="alan genis">
-        <span>Oyuncu ara (tüm sezonlar)</span>
-        <input id="ara" type="search" placeholder="Örn. Hagi, Muslera…" autocomplete="off">
-      </label>
+      <label class="alan"><span>Lig</span><select id="lig"></select></label>
+      <label class="alan"><span>Sezon</span><select id="sezon"></select></label>
+      <label class="alan"><span>Kulüp</span><select id="kulup"></select></label>
+      <label class="alan genis"><span>Oyuncu ara</span><input id="ara" type="search" placeholder="Örn. Icardi, Messi…" autocomplete="off"></label>
     </section>
+
+    <nav class="sekmeler" role="tablist">
+      <button class="sekme aktif" data-gorunum="kulup" role="tab">Kulüp kadrosu</button>
+      <button class="sekme" data-gorunum="gol" role="tab">Gol krallığı</button>
+      <button class="sekme" data-gorunum="asist" role="tab">Asist krallığı</button>
+    </nav>
 
     <section class="ozet" id="ozet"></section>
     <section id="icerik"><div class="bilgi">Yükleniyor…</div></section>

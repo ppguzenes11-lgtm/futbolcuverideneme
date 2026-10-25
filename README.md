@@ -4,8 +4,8 @@ Futbolcu verileri üzerinde denemeler için statik web projesi. Veritabanı: Sup
 
 - `js/config.js` — Supabase URL ve publishable anahtar
 - `js/db.js` — Supabase istemcisi (`db()`)
-- `index.html`, `css/style.css`, `js/app.js` — Galatasaray kadroları sitesi: sezon seçimi, mevkiye göre kadro,
-  tüm sezonlarda oyuncu arama, oyuncunun Galatasaray'daki sezonları
+- `index.html`, `css/style.css`, `js/app.js` — futbol veritabanı sitesi: lig/sezon/kulüp seçimi, kulüp kadrosu ve
+  istatistikleri, gol ve asist krallığı, oyuncu arama, oyuncunun 8 ligdeki kariyeri
 
 Yerelde çalıştırmak için: `npx serve .` (veya herhangi bir statik sunucu). Vercel'e doğrudan bağlanabilir.
 

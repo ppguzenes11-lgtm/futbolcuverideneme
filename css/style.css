@@ -1,16 +1,15 @@
 :root {
   --bg: #f6f4ef; --kart: #ffffff; --cizgi: #e5e0d6; --yazi: #1d1a16; --soluk: #6f685d;
-  --sari: #f2b300; --kirmizi: #a90432; --vurgu: #a90432; --yesil: #1f8a52;
+  --vurgu: #15803d; --yesil: #1f8a52;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #121110; --kart: #1c1a18; --cizgi: #2e2b27; --yazi: #efeae2; --soluk: #a39b8f; --vurgu: #ffc425; --yesil: #5fcf8f; }
+  :root { --bg: #121110; --kart: #1c1a18; --cizgi: #2e2b27; --yazi: #efeae2; --soluk: #a39b8f; --vurgu: #4ade80; --yesil: #5fcf8f; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--yazi); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
-.ust { background: linear-gradient(100deg, var(--kirmizi), #7d0225 60%, #5c021b); color: #fff; }
+.ust { background: linear-gradient(100deg, #14532d, #0f3d22 60%, #0a2a17); color: #fff; }
 .ust-ic { max-width: 1100px; margin: 0 auto; padding: 20px 16px; display: flex; gap: 14px; align-items: center; }
-.logo { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display: flex; transform: rotate(-30deg); box-shadow: 0 0 0 3px rgba(255,255,255,.25); flex: none; }
-.logo span { flex: 1; } .logo .sari { background: var(--sari); } .logo .kirmizi { background: #c8102e; }
+.logo { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 26px; background: rgba(255,255,255,.14); box-shadow: 0 0 0 3px rgba(255,255,255,.2); flex: none; }
 h1 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
 .alt { margin: 2px 0 0; opacity: .8; font-size: 13px; }
 .kap { max-width: 1100px; margin: 0 auto; padding: 18px 16px 48px; }
@@ -63,3 +62,12 @@ a { color: var(--vurgu); }
   td.ad { display: inline-block; width: auto; }
   .sag { text-align: left; }
 }
+
+.sekmeler { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; }
+.sekme { font: inherit; font-size: 14px; font-weight: 600; color: var(--soluk); background: var(--kart); border: 1px solid var(--cizgi); border-radius: 99px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+.sekme.aktif { color: #fff; background: var(--vurgu); border-color: var(--vurgu); }
+@media (prefers-color-scheme: dark) { .sekme.aktif { color: #0b1a10; } }
+.sira { width: 36px; color: var(--soluk); font-variant-numeric: tabular-nums; }
+.kariyer-toplam { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.kariyer-toplam .stat { padding: 10px; } .kariyer-toplam .stat b { font-size: 18px; }
+.soluk { color: var(--soluk); }
