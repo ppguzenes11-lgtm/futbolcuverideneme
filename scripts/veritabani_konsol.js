@@ -95,6 +95,8 @@
       const ic = td[1].querySelectorAll('table.inline-table tr');
       const no = temiz(td[0].querySelector('.rn_nummer')?.textContent);
       const ppg = parseFloat(temiz(td[13].textContent));
+      // td title: "Points average of club: 2.41" — oyuncunun etkisini ölçmek için kulübün sezon ortalaması
+      const kulupPpg = parseFloat(/([\d.]+)\s*$/.exec(td[13].getAttribute('title') || '')?.[1]);
       const v = (i) => (kullanilmadi ? 0 : sayi(td[i].textContent));
       satirlar.push({
         oyuncu: {
@@ -109,6 +111,7 @@
         mac: v(5), gol: v(6), asist: v(7), sari: v(8), ikinci_sari: v(9), kirmizi: v(10),
         oyuna_girdi: v(11), oyundan_cikti: v(12),
         mac_basi_puan: kullanilmadi || Number.isNaN(ppg) ? null : ppg,
+        kulup_mac_basi_puan: Number.isNaN(kulupPpg) ? null : kulupPpg,
         dakika: v(14),
       });
     }
@@ -151,7 +154,7 @@
         }
 
         for (const kulup of kulupler) {
-          const anahtar = `kulup:${kulup.id}:${sezon}`;
+          const anahtar = `kulup2:${kulup.id}:${sezon}`; // v2: kulüp ortalama puanı da kaydediliyor
           if (tamamMi(anahtar, sezon)) continue;
           const satirlar = await kulupIstatistik(kulup, sezon);
           sayfaSay++;

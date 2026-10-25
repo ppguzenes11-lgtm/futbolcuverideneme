@@ -97,3 +97,6 @@ end $$;
 --     execute format('drop policy if exists "yazma" on %I', t);
 --     execute format('drop policy if exists "guncelleme" on %I', t);
 --   end loop; end $$;
+
+-- v2: oyuncu sahadayken takımın maç başı puanı (mac_basi_puan) ile kulübün sezon ortalaması karşılaştırılabilsin diye
+alter table oyuncu_sezonlari add column if not exists kulup_mac_basi_puan numeric;
