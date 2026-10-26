@@ -164,13 +164,15 @@ export function enIyi11(puanlilar, dizilis) {
 }
 
 // ---------- Dönem (sezon aralığı) puanı ----------
-export const DONEM = { ZIRVE_SEZON: 3, ZIRVE_AGIRLIK: 0.75, ISTIKRAR_SEZON: 5, EKSIK_DOLGU: 50, IYI_SEZON: 70 };
+// İstikrar: her sezon puanına göre 0–1 arası sayılır (IYI_ALT ve altı 0, IYI_UST ve üstü 1, arası doğrusal)
+export const DONEM = { ZIRVE_SEZON: 3, ZIRVE_AGIRLIK: 0.8, ISTIKRAR_SEZON: 5, EKSIK_DOLGU: 50, IYI_ALT: 70, IYI_UST: 90 };
 
 /**
  * Sezon puanlarını tek dönem puanında birleştirir.
  * sezonlar: [{ sezon, puanlilar }] — puanlilar, puanla() çıktısı
- * Dönem puanı = %75 zirve (en iyi 3 sezonun ortalaması; eksik sezonlar 50) + %25 istikrar (70+ puanlı iyi sezon sayısı, en fazla 5).
- * İstikrar sadece iyi sezonları sayar: uzun ama vasat kariyer ödüllendirilmesin.
+ * Dönem puanı = %80 zirve (en iyi 3 sezonun ortalaması; eksik sezonlar 50) + %20 istikrar.
+ * İstikrar = iyi sezon değeri toplamı / 5: 90+ puanlı sezon 1, 80'lik yarım, 70 ve altı 0 sayılır.
+ * Böylece uzun ama vasat kariyer, kısa ama çok iyi bir dönemi geçemez.
  */
 export function donemPuanla(sezonlar) {
   const R = sezonlar.length;
@@ -196,7 +198,7 @@ export function donemPuanla(sezonlar) {
     const enIyiler = liste.slice(0, K).map((s) => s.puan);
     while (enIyiler.length < K) enIyiler.push(DONEM.EKSIK_DOLGU);
     const zirve = enIyiler.reduce((a, b) => a + b, 0) / K;
-    const iyiSezon = liste.filter((s) => s.puan >= DONEM.IYI_SEZON).length;
+    const iyiSezon = liste.reduce((a, s) => a + Math.min(1, Math.max(0, (s.puan - DONEM.IYI_ALT) / (DONEM.IYI_UST - DONEM.IYI_ALT))), 0);
     const istikrar = Math.min(1, iyiSezon / IST) * 100;
     // Mevki ve kulüp: en çok dakika aldığı
     const dk = (f) => { const m = new Map(); for (const s of liste) m.set(f(s), (m.get(f(s)) || 0) + s.dakika); return [...m].sort((a, b) => b[1] - a[1]); };

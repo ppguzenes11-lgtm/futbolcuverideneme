@@ -241,7 +241,7 @@ async function seciliPuanlar(no) {
 }
 const eksikNotu = (p) => (sonDonem && p.yuklenenSezon < p.istenenSezon
   ? `<p class="not">Aralıktaki ${p.istenenSezon} sezonun ${p.yuklenenSezon} tanesinin verisi yüklü; hesap yalnızca bunlarla yapıldı.</p>` : '');
-const donemNotu = () => (sonDonem ? `<p class="not">Dönem puanı: %${Math.round(DONEM.ZIRVE_AGIRLIK * 100)} zirve (en iyi ${DONEM.ZIRVE_SEZON} sezonun ortalaması) + %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)} istikrar (${DONEM.IYI_SEZON}+ puanlı iyi sezon sayısı, en fazla ${DONEM.ISTIKRAR_SEZON}). ⭐ zirveye sayılan sezonlar.</p>` : '');
+const donemNotu = () => (sonDonem ? `<p class="not">Dönem puanı: %${Math.round(DONEM.ZIRVE_AGIRLIK * 100)} zirve (en iyi ${DONEM.ZIRVE_SEZON} sezonun ortalaması) + %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)} istikrar (iyi sezon sayısı: ${DONEM.IYI_UST}+ puanlı sezon 1, ${(DONEM.IYI_ALT + DONEM.IYI_UST) / 2}'lik yarım, ${DONEM.IYI_ALT} ve altı 0 sayılır; tam puan ${DONEM.ISTIKRAR_SEZON}).</p>` : '');
 const kulupYazi = (o) => esc(o.kulupler ? o.kulupler[0] + (o.kulupler.length > 1 ? ` +${o.kulupler.length - 1}` : '') : o.kulup_ad);
 
 async function enIyi11Goster() {
@@ -345,7 +345,7 @@ function donemDokumu(o) {
         <div><div class="cubuk"><i style="width:${Math.round(o.zirve)}%"></i></div><small>En iyi ${DONEM.ZIRVE_SEZON} sezonunun ortalaması${o.sezonlar.length < DONEM.ZIRVE_SEZON ? ` (eksik sezonlar ${DONEM.EKSIK_DOLGU} sayıldı)` : ''}: ${o.zirve.toFixed(1)}</small></div>
         <span class="sag"><b>+${(DONEM.ZIRVE_AGIRLIK * o.zirve).toFixed(1)}</b></span></div>
       <div class="dokum-satir"><span>İstikrar<br><small>ağırlık %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)}</small></span>
-        <div><div class="cubuk"><i style="width:${Math.round(o.istikrar)}%"></i></div><small>${o.iyiSezon} iyi sezon (${DONEM.IYI_SEZON}+ puan) · tam puan için ${o.istikrarHedef}</small></div>
+        <div><div class="cubuk"><i style="width:${Math.round(o.istikrar)}%"></i></div><small>İyi sezon değeri ${o.iyiSezon.toLocaleString('tr-TR', { maximumFractionDigits: 1 })} / ${o.istikrarHedef} (${DONEM.IYI_UST}+ puanlı sezon 1, ${DONEM.IYI_ALT} ve altı 0 sayılır)</small></div>
         <span class="sag"><b>+${((1 - DONEM.ZIRVE_AGIRLIK) * o.istikrar).toFixed(1)}</b></span></div>
     </div>
     <p class="not">⭐ zirveye sayılan en iyi ${DONEM.ZIRVE_SEZON} sezon · Bir sezona dokunun: o sezonun puan dökümü.</p>

@@ -55,5 +55,5 @@ ailesindeki oyuncular arasında yüzdelik dilime çevrilir, mevkiye göre ağır
 Sitede: **En iyi 11** (4-3-3, 4-2-3-1, 4-4-2, 3-5-2) ve **Puan sıralaması**; her oyuncunun puan dökümü görülebilir.
 
 **Sezon aralığı:** En iyi 11 ve Puan sıralamasında "Bitiş sezonu" seçilince dönem puanı hesaplanır:
-%75 zirve (oyuncunun aralıktaki en iyi 3 sezonunun ortalaması; 3'ten az sezonu varsa eksikler 50 sayılır) +
-%25 istikrar (takım dakikalarının en az %25'ini oynadığı sezon sayısı, en fazla 5). Ayarlar: `DONEM` (`js/puan.js`).
+%80 zirve (oyuncunun aralıktaki en iyi 3 sezonunun ortalaması; 3'ten az sezonu varsa eksikler 50 sayılır) +
+%20 istikrar (iyi sezon değeri / 5; 90+ puanlı sezon 1, 80'lik yarım, 70 ve altı 0 sayılır). Ayarlar: `DONEM` (`js/puan.js`).
