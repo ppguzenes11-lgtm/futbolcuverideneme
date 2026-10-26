@@ -242,7 +242,8 @@ async function seciliPuanlar(no) {
 const eksikNotu = (p) => (sonDonem && p.yuklenenSezon < p.istenenSezon
   ? `<p class="not">Aralıktaki ${p.istenenSezon} sezonun ${p.yuklenenSezon} tanesinin verisi yüklü; hesap yalnızca bunlarla yapıldı.</p>` : '');
 const donemNotu = () => (sonDonem ? `<p class="not">Dönem puanı: %${Math.round(DONEM.ZIRVE_AGIRLIK * 100)} zirve (en iyi ${DONEM.ZIRVE_SEZON} sezonun ortalaması) + %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)} istikrar (iyi sezon sayısı: ${DONEM.IYI_UST}+ puanlı sezon 1, ${(DONEM.IYI_ALT + DONEM.IYI_UST) / 2}'lik yarım, ${DONEM.IYI_ALT} ve altı 0 sayılır; tam puan ${DONEM.ISTIKRAR_SEZON}).</p>` : '');
-const kulupYazi = (o) => esc(o.kulupler ? o.kulupler[0] + (o.kulupler.length > 1 ? ` +${o.kulupler.length - 1}` : '') : o.kulup_ad);
+// Dönem satırında kulupler bir ad listesidir; tek sezon satırında 'kulupler' veritabanı ilişkisidir (nesne), kulup_ad kullanılır
+const kulupYazi = (o) => esc(Array.isArray(o.kulupler) ? o.kulupler[0] + (o.kulupler.length > 1 ? ` +${o.kulupler.length - 1}` : '') : o.kulup_ad);
 
 async function enIyi11Goster() {
   const no = ++istekNo;
