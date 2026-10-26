@@ -108,19 +108,39 @@ const kart = (r) => {
 };
 
 // ---------- Gol / asist krallığı (ligdeki kulüplerde, tüm turnuvalar) ----------
+// Krallık kapsamı: 'lig' (yalnızca lig maçları) ya da 'tum' (lig + kupa + Avrupa)
+let krallikKapsam = 'lig';
 async function kralligGoster(alan) {
   const { data: kl, error: e1 } = await db().from('lig_kulupleri').select('kulup_id').eq('lig_kod', durum.lig).eq('sezon', durum.sezon);
   if (e1) return hata(e1);
   if (!kl.length) return bos(`${ligAd(durum.lig)} ${sezonAd(durum.sezon)} için henüz veri yok.`);
-  const { data, error } = await db().from('oyuncu_sezonlari').select('oyuncu_id,gol,asist,mac,dakika,oyuncular(ad,uyruk),kulupler(ad)')
-    .in('kulup_id', kl.map((r) => r.kulup_id)).eq('sezon', durum.sezon).gt(alan, 0).order(alan, { ascending: false }).order('mac').limit(30);
+  const sutunlar = 'oyuncu_id,gol,asist,mac,dakika,oyuncular(ad,uyruk),kulupler(ad)';
+  let kapsam = krallikKapsam;
+  let { data, error } = kapsam === 'lig'
+    ? await db().from('oyuncu_turnuvalari').select(sutunlar).eq('turnuva_kod', durum.lig).eq('sezon', durum.sezon)
+      .gt(alan, 0).order(alan, { ascending: false }).order('mac').limit(30)
+    : await db().from('oyuncu_sezonlari').select(sutunlar).in('kulup_id', kl.map((r) => r.kulup_id)).eq('sezon', durum.sezon)
+      .gt(alan, 0).order(alan, { ascending: false }).order('mac').limit(30);
   if (error) return hata(error);
+  let notEk = '';
+  if (kapsam === 'lig' && !data.length) {
+    // Bu sezonun lig istatistikleri yoksa tüm turnuvalara düş
+    ({ data, error } = await db().from('oyuncu_sezonlari').select(sutunlar).in('kulup_id', kl.map((r) => r.kulup_id)).eq('sezon', durum.sezon)
+      .gt(alan, 0).order(alan, { ascending: false }).order('mac').limit(30));
+    if (error) return hata(error);
+    kapsam = 'tum';
+    notEk = ' Bu sezonun yalnızca lig istatistikleri henüz yok.';
+  }
   $('#ozet').innerHTML = '';
   if (!data.length) return bos('Bu sezon için kayıt yok.');
   const baslik = alan === 'gol' ? 'Gol' : 'Asist';
   $('#icerik').innerHTML = `
     <div class="grup"><h3>${esc(ligAd(durum.lig))} ${sezonAd(durum.sezon)} · ${baslik} krallığı</h3>
-      <p class="soluk" style="margin:-4px 0 10px;font-size:13px">Lig kulüplerinde tüm turnuvalar (lig, kupa, Avrupa) toplamı.</p>
+      <div class="segment" style="margin:2px 0 8px">
+        <button data-kapsam="lig" class="${kapsam === 'lig' ? 'aktif' : ''}">Sadece lig</button>
+        <button data-kapsam="tum" class="${kapsam === 'tum' ? 'aktif' : ''}">Tüm turnuvalar</button>
+      </div>
+      <p class="soluk" style="margin:0 0 10px;font-size:13px">${kapsam === 'lig' ? 'Yalnızca lig maçları.' : 'Lig, kupa ve Avrupa maçlarının toplamı.'}${notEk}</p>
       <table>
         <thead><tr><th>#</th><th>Oyuncu</th><th>Kulüp</th><th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Asist</th><th class="sag">Dakika</th></tr></thead>
         <tbody>${data.map((r, i) => `
@@ -134,6 +154,7 @@ async function kralligGoster(alan) {
             <td data-k="Dakika" class="sag">${sayi(r.dakika)}</td>
           </tr>`).join('')}</tbody>
       </table></div>`;
+  $('#icerik').querySelectorAll('[data-kapsam]').forEach((b) => b.addEventListener('click', () => { krallikKapsam = b.dataset.kapsam; kralligGoster(alan); }));
 }
 
 // ---------- Oyuncu kariyeri ----------
