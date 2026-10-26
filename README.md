@@ -39,3 +39,17 @@ Tablolar: `ligler`, `kulupler`, `lig_kulupleri`, `oyuncular`, `oyuncu_sezonlari`
 
 Tablolar: `kulup_turnuvalari` (kulübün turnuvadaki maç başı puanı), `oyuncu_turnuvalari` (oyuncunun turnuvadaki istatistikleri;
 `mac_basi_puan` = oyuncu sahadayken takımın puan ortalaması). İleride Şampiyonlar Ligi / Avrupa Ligi de aynı tablolara girer.
+
+## Futbolcu Puanı (`js/puan.js`)
+
+Bir lig sezonundaki oyuncular, sadece lig maçlarına göre 0–100 arası puanlanır. Bileşenler aynı sezon ve aynı mevki
+ailesindeki oyuncular arasında yüzdelik dilime çevrilir, mevkiye göre ağırlıklandırılır:
+
+- **Süre payı** — takımın lig dakikalarının yüzde kaçında sahadaydı
+- **Takıma etkisi** — oyuncu sahadayken ve yokken takımın maç başı puanı farkı (iki taraf da en az 3 maç; örneklemle küçültülür)
+- **Takım başarısı** — kulübün ligdeki puan ortalaması sırası (az süre alanlar kısmen pay alır)
+- **Üretkenlik** — 90 dk başına gol ve asist (mevkiye göre gol/asist değeri)
+- **Disiplin** — kart cezası
+- **Şampiyonluk bonusu** — biten sezonda en yüksek puan ortalamalı kulüpte, süre oranında
+
+Sitede: **En iyi 11** (4-3-3, 4-2-3-1, 4-4-2, 3-5-2) ve **Puan sıralaması**; her oyuncunun puan dökümü görülebilir.

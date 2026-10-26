@@ -71,3 +71,25 @@ a { color: var(--vurgu); }
 .kariyer-toplam { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
 .kariyer-toplam .stat { padding: 10px; } .kariyer-toplam .stat b { font-size: 18px; }
 .soluk { color: var(--soluk); }
+
+/* En iyi 11 sahası */
+.saha { position: relative; background: linear-gradient(180deg, #1d7a3e, #17652f); border-radius: 16px; padding: 18px 8px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+.saha::before { content: ""; position: absolute; inset: 10px; border: 2px solid rgba(255,255,255,.35); border-radius: 8px; pointer-events: none; }
+.saha::after { content: ""; position: absolute; left: 10px; right: 10px; top: 50%; border-top: 2px solid rgba(255,255,255,.35); pointer-events: none; }
+.saha-sira { position: relative; z-index: 1; display: flex; justify-content: space-evenly; gap: 6px; }
+.oyuncu-kart { background: rgba(255,255,255,.95); color: #14231a; border: 0; border-radius: 12px; padding: 8px 6px; width: 120px; text-align: center; cursor: pointer; font: inherit; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.oyuncu-kart:hover { transform: translateY(-2px); }
+.oyuncu-kart .p { display: inline-block; font-weight: 800; font-size: 15px; background: #15803d; color: #fff; border-radius: 8px; padding: 1px 7px; }
+.oyuncu-kart b { display: block; font-size: 13px; line-height: 1.2; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oyuncu-kart small { display: block; font-size: 11px; color: #55615a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oyuncu-kart.bos { opacity: .55; cursor: default; }
+@media (max-width: 680px) { .saha { padding: 16px 12px; } .saha-sira { gap: 4px; } .oyuncu-kart { width: auto; flex: 1 1 0; max-width: 31%; min-width: 0; padding: 6px 3px; } .oyuncu-kart .p { font-size: 13px; } .oyuncu-kart b { font-size: 11px; } .oyuncu-kart small { font-size: 10px; } }
+
+/* Puan dökümü */
+.dokum { display: grid; gap: 8px; margin: 10px 0 14px; }
+.dokum-satir { display: grid; grid-template-columns: 120px 1fr 60px; gap: 10px; align-items: center; font-size: 14px; }
+.cubuk { height: 10px; background: var(--cizgi); border-radius: 99px; overflow: hidden; }
+.cubuk i { display: block; height: 100%; background: var(--vurgu); border-radius: 99px; }
+.dokum-satir small { color: var(--soluk); }
+.buyuk-puan { font-size: 40px; font-weight: 800; color: var(--vurgu); line-height: 1; }
+.not { font-size: 13px; color: var(--soluk); margin: 6px 0 12px; }

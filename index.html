@@ -23,6 +23,10 @@
       <label class="alan"><span>Lig</span><select id="lig"></select></label>
       <label class="alan"><span>Sezon</span><select id="sezon"></select></label>
       <label class="alan"><span>Kulüp</span><select id="kulup"></select></label>
+      <label class="alan" id="dizilis-alan" style="display:none"><span>Diziliş</span><select id="dizilis"></select></label>
+      <label class="alan" id="mevki-alan" style="display:none"><span>Mevki</span><select id="mevki-filtre">
+        <option value="">Tümü</option><option value="kaleci">Kaleci</option><option value="defans">Defans</option><option value="ortasaha">Orta saha</option><option value="hucum">Hücum</option>
+      </select></label>
       <label class="alan genis"><span>Oyuncu ara</span><input id="ara" type="search" placeholder="Örn. Icardi, Messi…" autocomplete="off"></label>
     </section>
 
@@ -30,6 +34,8 @@
       <button class="sekme aktif" data-gorunum="kulup" role="tab">Kulüp kadrosu</button>
       <button class="sekme" data-gorunum="gol" role="tab">Gol krallığı</button>
       <button class="sekme" data-gorunum="asist" role="tab">Asist krallığı</button>
+      <button class="sekme" data-gorunum="enIyi11" role="tab">⭐ En iyi 11</button>
+      <button class="sekme" data-gorunum="puan" role="tab">Puan sıralaması</button>
     </nav>
 
     <section class="ozet" id="ozet"></section>
