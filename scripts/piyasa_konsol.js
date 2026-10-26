@@ -59,8 +59,10 @@
   }
 
   const AYLAR = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
-  // 'Jun 16, 1986' -> '1986-06-16'
+  // '16/06/1986 (37)' (Transfermarkt'ın kullandığı biçim) ya da 'Jun 16, 1986' -> '1986-06-16'
   const tarih = (m) => {
+    const g = /(\d{1,2})[/.](\d{1,2})[/.](\d{4})/.exec(m || '');
+    if (g) return `${g[3]}-${g[2].padStart(2, '0')}-${g[1].padStart(2, '0')}`;
     const x = /([A-Z][a-z]{2}) (\d{1,2}), (\d{4})/.exec(m || '');
     return x && AYLAR[x[1]] ? `${x[3]}-${AYLAR[x[1]]}-${x[2].padStart(2, '0')}` : null;
   };
@@ -111,14 +113,14 @@
   console.log('Kulüp listesi ve daha önce çekilen sayfalar okunuyor…');
   const [isler, cekilenRows] = await Promise.all([
     sbOkuHepsi('lig_kulupleri', 'lig_kod,sezon,kulup_id,kulupler(ad,slug)', '&order=sezon.desc,lig_kod,kulup_id'),
-    sbOkuHepsi('cekilen_sayfalar', 'anahtar,tarih', '&anahtar=like.kadro:*'),
+    sbOkuHepsi('cekilen_sayfalar', 'anahtar,tarih', '&anahtar=like.kadro2:*'),
   ]);
   const cekilen = new Map(cekilenRows.map((r) => [r.anahtar, new Date(r.tarih)]));
   const tamamMi = (anahtar, sezon) => {
     const t = cekilen.get(anahtar);
     return !!t && (sezon < BU_SEZON || (Date.now() - t) / 864e5 < GUNCEL_YENILE_GUN);
   };
-  const kalan = isler.filter((i) => !tamamMi(`kadro:${i.kulup_id}:${i.sezon}`, i.sezon));
+  const kalan = isler.filter((i) => !tamamMi(`kadro2:${i.kulup_id}:${i.sezon}`, i.sezon));
   console.log(`${isler.length} kulüp-sezon var, ${isler.length - kalan.length} tanesi daha önce çekilmiş. Kalan: ${kalan.length} sayfa (~${Math.ceil(kalan.length * 5 / 60)} dk).`);
 
   let sayfaSay = 0;
@@ -128,7 +130,7 @@
     for (const is of kalan) {
       const { lig_kod: lig, sezon, kulup_id: kulupId } = is;
       const kulup = is.kulupler;
-      const anahtar = `kadro:${kulupId}:${sezon}`;
+      const anahtar = `kadro2:${kulupId}:${sezon}`; // v2: tarih biçimi düzeltildi, önceki sayfalar yeniden okunur
       const satirlar = await kadro(kulup.slug, kulupId, sezon);
       sayfaSay++;
       if (!satirlar) {
