@@ -32,3 +32,10 @@ Ligler: Süper Lig, Premier League, LaLiga, Serie A, Bundesliga, Ligue 1, Liga P
 4. Bitince SQL dosyasının sonundaki komutla yazma izinlerini kapatın.
 
 Tablolar: `ligler`, `kulupler`, `lig_kulupleri`, `oyuncular`, `oyuncu_sezonlari` (tüm turnuvalar toplamı), `cekilen_sayfalar`.
+
+**2. aşama — lig istatistikleri (sadece lig maçları) ve kulüp puan ortalaması**
+1. Supabase > SQL Editor'de `supabase/turnuvalar.sql` dosyasını çalıştırın.
+2. Transfermarkt konsolunda `scripts/lig_istatistik_konsol.js` içeriğini çalıştırın (kulüp listesi 1. aşamadan gelir).
+
+Tablolar: `kulup_turnuvalari` (kulübün turnuvadaki maç başı puanı), `oyuncu_turnuvalari` (oyuncunun turnuvadaki istatistikleri;
+`mac_basi_puan` = oyuncu sahadayken takımın puan ortalaması). İleride Şampiyonlar Ligi / Avrupa Ligi de aynı tablolara girer.
