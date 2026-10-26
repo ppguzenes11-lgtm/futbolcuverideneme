@@ -63,3 +63,8 @@ Sitede: **En iyi 11** (4-3-3, 4-2-3-1, 4-4-2, 3-5-2) ve **Puan sıralaması**; h
 2. Transfermarkt konsolunda `scripts/piyasa_konsol.js` içeriğini çalıştırın (kulüp listesi 1. aşamadan gelir).
 
 Eklenen sütunlar: `oyuncular.dogum_tarihi / boy_cm / ayak`, `oyuncu_sezonlari.piyasa_degeri_eur / katilma_tarihi / geldigi_kulup`.
+
+## Keşfet (`js/kesfet.js`)
+
+Rekorlar, unvanlar ve ligler arası karşılaştırmalar. İstatistikler önceden hesaplanır:
+`python scripts/kesfet_uret.py` → `veri/kesfet.json` (veri yenilendikçe tekrar çalıştırılır).

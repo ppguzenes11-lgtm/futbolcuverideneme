@@ -1,4 +1,5 @@
 import { db } from './db.js';
+import { kesfetGoster } from './kesfet.js';
 import { puanla, enIyi11, DIZILISLER, BILESEN_AD, donemPuanla, DONEM } from './puan.js';
 
 const $ = (s) => document.querySelector(s);
@@ -390,6 +391,7 @@ async function goster() {
     if (durum.gorunum === 'kulup') await kulupGoster();
     else if (durum.gorunum === 'enIyi11') await enIyi11Goster();
     else if (durum.gorunum === 'puan') await puanSiralamaGoster();
+    else if (durum.gorunum === 'kesfet') await kesfetGoster($('#icerik'), durum.lig, { oyuncuDetay, ozetEl: $('#ozet') });
     else await kralligGoster(durum.gorunum);
   } catch (e) { hata(e); }
 }
@@ -401,6 +403,7 @@ function gorunumSec(g) {
   durum.gorunum = g;
   document.querySelectorAll('.sekme').forEach((b) => b.classList.toggle('aktif', b.dataset.gorunum === g));
   $('#kulup').closest('.alan').style.display = g === 'kulup' ? '' : 'none';
+  $('#sezon').closest('.alan').style.display = g === 'kesfet' ? 'none' : '';
   $('#dizilis-alan').style.display = g === 'enIyi11' ? '' : 'none';
   $('#bitis-alan').style.display = g === 'enIyi11' || g === 'puan' ? '' : 'none';
   $('#mevki-alan').style.display = g === 'puan' ? '' : 'none';
