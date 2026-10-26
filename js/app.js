@@ -1,5 +1,5 @@
 import { db } from './db.js';
-import { puanla, enIyi11, DIZILISLER, BILESEN_AD } from './puan.js';
+import { puanla, enIyi11, DIZILISLER, BILESEN_AD, donemPuanla, DONEM } from './puan.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -22,7 +22,7 @@ const ULKE_TM = { İngiltere: 'England', İspanya: 'Spain', İtalya: 'Italy', Al
 const bugun = new Date();
 const BU_SEZON = bugun.getMonth() >= 6 ? bugun.getFullYear() : bugun.getFullYear() - 1;
 
-const durum = { lig: 'TR1', sezon: BU_SEZON, kulup: 141, gorunum: 'kulup', dizilis: '4-3-3', mevkiFiltre: '' };
+const durum = { lig: 'TR1', sezon: BU_SEZON, kulup: 141, gorunum: 'kulup', dizilis: '4-3-3', mevkiFiltre: '', sezonBit: null };
 let ligler = [];
 
 function hata(e) {
@@ -202,13 +202,54 @@ async function ligPuanlari(lig, sezon) {
   puanOnbellek.set(anahtar, sonuc);
   return sonuc;
 }
-const puanYok = () => bos(`${esc(ligAd(durum.lig))} ${sezonAd(durum.sezon)} için lig istatistikleri henüz yüklenmemiş. Lig istatistik kodu bu sezona geldiğinde puanlar burada görünecek.`);
-const devamNotu = () => (durum.sezon >= BU_SEZON ? '<p class="not">Sezon devam ediyor; puanlar oynanan maçlara göre ve şampiyonluk bonusu yok.</p>' : '');
+// Seçili sezon aralığı (bitiş seçilmediyse tek sezon)
+const aralik = () => {
+  const a = durum.sezon; const b = durum.sezonBit ?? durum.sezon;
+  return [Math.min(a, b), Math.max(a, b)];
+};
+const aralikAd = () => { const [a, b] = aralik(); return a === b ? sezonAd(a) : `${sezonAd(a)} – ${sezonAd(b)}`; };
+const puanYok = () => bos(`${esc(ligAd(durum.lig))} ${aralikAd()} için lig istatistikleri henüz yüklenmemiş. Lig istatistik kodu bu sezonlara geldiğinde puanlar burada görünecek.`);
+const devamNotu = () => (aralik()[1] >= BU_SEZON ? '<p class="not">Devam eden sezon dahil: o sezonun puanları oynanan maçlara göre ve şampiyonluk bonusu yok.</p>' : '');
 let sonPuanlar = [];
+let sonDonem = false;
+let istekNo = 0; // seçim değişince eski (yavaş) hesap ekrana yazmasın
+
+/** Seçili lig ve sezon(lar)ın puanları: tek sezonsa sezon puanı, aralıksa dönem puanı */
+async function seciliPuanlar(no) {
+  const [a, b] = aralik();
+  const lig = durum.lig;
+  if (a === b) {
+    const p = await ligPuanlari(lig, a);
+    if (no === istekNo) sonDonem = false;
+    return p;
+  }
+  const sezonlar = [];
+  for (let s = b; s >= a; s -= 3) {
+    // 3'er sezon paralel yükle
+    const grup = [s, s - 1, s - 2].filter((x) => x >= a);
+    if (no !== istekNo) return null;
+    $('#icerik').innerHTML = `<div class="bilgi">Puanlar hesaplanıyor… ${sezonAd(grup[0])} (${b - s + 1}/${b - a + 1})</div>`;
+    const sonuclar = await Promise.all(grup.map((x) => ligPuanlari(lig, x)));
+    grup.forEach((x, i) => { if (sonuclar[i]) sezonlar.push({ sezon: x, puanlilar: sonuclar[i] }); });
+  }
+  if (!sezonlar.length || no !== istekNo) return null;
+  sonDonem = true;
+  const p = donemPuanla(sezonlar);
+  p.yuklenenSezon = sezonlar.length;
+  p.istenenSezon = b - a + 1;
+  return p;
+}
+const eksikNotu = (p) => (sonDonem && p.yuklenenSezon < p.istenenSezon
+  ? `<p class="not">Aralıktaki ${p.istenenSezon} sezonun ${p.yuklenenSezon} tanesinin verisi yüklü; hesap yalnızca bunlarla yapıldı.</p>` : '');
+const donemNotu = () => (sonDonem ? `<p class="not">Dönem puanı: %${Math.round(DONEM.ZIRVE_AGIRLIK * 100)} zirve (en iyi ${DONEM.ZIRVE_SEZON} sezonun ortalaması) + %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)} istikrar (düzenli oynadığı sezon sayısı).</p>` : '');
+const kulupYazi = (o) => esc(o.kulupler ? o.kulupler[0] + (o.kulupler.length > 1 ? ` +${o.kulupler.length - 1}` : '') : o.kulup_ad);
 
 async function enIyi11Goster() {
+  const no = ++istekNo;
+  $('#ozet').innerHTML = '';
   $('#icerik').innerHTML = '<div class="bilgi">Puanlar hesaplanıyor…</div>';
-  const p = await ligPuanlari(durum.lig, durum.sezon);
+  const p = await seciliPuanlar(no);
+  if (no !== istekNo) return;
   if (!p) return puanYok();
   sonPuanlar = p;
   const xi = enIyi11(p, durum.dizilis);
@@ -216,41 +257,47 @@ async function enIyi11Goster() {
   const ort = secilen.reduce((a, y) => a + y.oyuncu.puan, 0) / (secilen.length || 1);
   $('#ozet').innerHTML = [
     ['Takım puanı', ort.toLocaleString('tr-TR', { maximumFractionDigits: 1 })],
-    ['Kulüp sayısı', new Set(secilen.map((y) => y.oyuncu.kulup_id)).size],
-    ['Toplam lig golü', secilen.reduce((a, y) => a + y.oyuncu.gol, 0)],
+    ['Kulüp sayısı', new Set(secilen.map((y) => y.oyuncu.kulup_ad)).size],
+    [sonDonem ? 'Dönemde toplam lig golü' : 'Toplam lig golü', sayi(secilen.reduce((a, y) => a + y.oyuncu.gol, 0))],
     ['Diziliş', durum.dizilis],
   ].map(([e, d]) => `<div class="stat"><b>${d}</b><span>${e}</span></div>`).join('');
   $('#icerik').innerHTML = `
-    <div class="grup"><h3>${esc(ligAd(durum.lig))} ${sezonAd(durum.sezon)} · Sezonun en iyi 11'i</h3>${devamNotu()}
+    <div class="grup"><h3>${esc(ligAd(durum.lig))} ${aralikAd()} · ${sonDonem ? 'Dönemin' : 'Sezonun'} en iyi 11'i</h3>${eksikNotu(p)}${devamNotu()}
       <div class="saha">${xi.map((sira) => `<div class="saha-sira">${sira.map(({ pozisyon, oyuncu }) => (oyuncu ? `
         <button class="oyuncu-kart" data-puan="${oyuncu.oyuncu_id}:${oyuncu.kulup_id}">
-          <span class="p">${oyuncu.puan.toFixed(1)}</span><b>${esc(oyuncu.ad)}</b><small>${esc(oyuncu.kulup_ad)}</small><small>${esc(pozisyon[1])}</small>
+          <span class="p">${oyuncu.puan.toFixed(1)}</span><b>${esc(oyuncu.ad)}</b><small>${kulupYazi(oyuncu)}</small><small>${esc(pozisyon[1])}${sonDonem ? ` · ${oyuncu.sezonlar.length} sz` : ''}</small>
         </button>` : `<div class="oyuncu-kart bos"><b>—</b><small>${esc(pozisyon[1])}</small></div>`)).join('')}</div>`).join('')}
       </div>
       <p class="not">Oyuncuya dokunun: puanın nereden geldiğini görün. Puan yalnızca lig maçlarından hesaplanır; aynı mevkideki oyuncularla karşılaştırılır.</p>
+      ${donemNotu()}
     </div>`;
 }
 
 async function puanSiralamaGoster() {
+  const no = ++istekNo;
+  $('#ozet').innerHTML = '';
   $('#icerik').innerHTML = '<div class="bilgi">Puanlar hesaplanıyor…</div>';
-  const p = await ligPuanlari(durum.lig, durum.sezon);
+  const p = await seciliPuanlar(no);
+  if (no !== istekNo) return;
   if (!p) return puanYok();
   sonPuanlar = p;
   const liste = p.filter((o) => o.sure >= 0.25 && (!durum.mevkiFiltre || o.aile === durum.mevkiFiltre)).slice(0, 50);
   $('#ozet').innerHTML = '';
   $('#icerik').innerHTML = `
-    <div class="grup"><h3>${esc(ligAd(durum.lig))} ${sezonAd(durum.sezon)} · Futbolcu Puanı sıralaması</h3>${devamNotu()}
-      <p class="not">Takımının lig dakikalarının en az %25'inde oynayanlar. Satıra dokunun: puan dökümü.</p>
+    <div class="grup"><h3>${esc(ligAd(durum.lig))} ${aralikAd()} · Futbolcu Puanı sıralaması</h3>${eksikNotu(p)}${devamNotu()}${donemNotu()}
+      <p class="not">Takımının lig dakikalarının en az %25'inde oynayanlar${sonDonem ? ' (en az bir sezonda)' : ''}. Satıra dokunun: puan dökümü.</p>
       <table>
-        <thead><tr><th>#</th><th>Oyuncu</th><th>Kulüp</th><th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Asist</th><th class="sag">Puan</th></tr></thead>
+        <thead><tr><th>#</th><th>Oyuncu</th><th>Kulüp</th>${sonDonem ? '<th class="sag">Sezon</th>' : ''}<th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Asist</th>${sonDonem ? '<th class="sag">En iyi sezon</th>' : ''}<th class="sag">Puan</th></tr></thead>
         <tbody>${liste.map((o, i) => `
           <tr data-puan="${o.oyuncu_id}:${o.kulup_id}">
             <td class="sira">${i + 1}</td>
             <td class="ad"><b>${esc(o.ad)}</b><small>${esc(mevki(o.mevki)[1])}</small></td>
-            <td data-k="Kulüp">${esc(o.kulup_ad)}${o.sampiyon ? ' 🏆' : ''}</td>
+            <td data-k="Kulüp">${kulupYazi(o)}${o.sampiyon || o.sampiyonluk ? ` 🏆${o.sampiyonluk > 1 ? '×' + o.sampiyonluk : ''}` : ''}</td>
+            ${sonDonem ? `<td data-k="Sezon" class="sag">${o.sezonlar.length}</td>` : ''}
             <td data-k="Maç" class="sag">${o.mac}</td>
             <td data-k="Gol" class="sag">${o.gol}</td>
             <td data-k="Asist" class="sag">${o.asist}</td>
+            ${sonDonem ? `<td data-k="En iyi sezon" class="sag">${o.enIyiSezon.toFixed(1)}</td>` : ''}
             <td data-k="Puan" class="sag"><b>${o.puan.toFixed(1)}</b></td>
           </tr>`).join('')}</tbody>
       </table></div>`;
@@ -264,14 +311,13 @@ const BILESEN_ACIKLAMA = {
   U: (o) => `${o.gol} gol, ${o.asist} asist · aynı mevkidekilere göre 90 dk başına.`,
   D: (o) => `${o.sari} sarı, ${o.ikinci_sari} ikinci sarı, ${o.kirmizi} kırmızı.`,
 };
-function puanDokumu(anahtar) {
-  const o = sonPuanlar.find((x) => `${x.oyuncu_id}:${x.kulup_id}` === anahtar);
-  if (!o) return;
+/** Tek sezon puan dökümü */
+function sezonDokumu(o, sezon) {
   $('#detay-ad').textContent = o.ad;
   $('#detay-govde').innerHTML = `
     <div style="display:flex;gap:16px;align-items:center;margin-bottom:6px">
       <div class="buyuk-puan">${o.puan.toFixed(1)}</div>
-      <div><b>${esc(o.kulup_ad)}</b> · ${esc(ligAd(durum.lig))} ${sezonAd(durum.sezon)}<br><span class="soluk">${esc(mevki(o.mevki)[1])} · ${o.mac} maç · ${o.gol} gol · ${o.asist} asist</span></div>
+      <div><b>${esc(o.kulup_ad)}</b> · ${esc(ligAd(durum.lig))} ${sezonAd(sezon)}<br><span class="soluk">${esc(mevki(o.mevki)[1])} · ${o.mac} maç · ${o.gol} gol · ${o.asist} asist</span></div>
     </div>
     <div class="dokum">${Object.keys(o.agirlik).map((b) => `
       <div class="dokum-satir">
@@ -284,6 +330,42 @@ function puanDokumu(anahtar) {
     <p class="not">Çubuklar: aynı sezon ve aynı mevki ailesindeki oyuncular arasındaki yeri (0–100). Puan = ağırlıklı toplam.</p>
     <p><a href="#" data-kariyer="${o.oyuncu_id}">Kariyerini gör →</a></p>`;
   if (!$('#detay').open) $('#detay').showModal();
+}
+/** Dönem puan dökümü: zirve + istikrar ve sezon sezon puanlar */
+function donemDokumu(o) {
+  const enIyiler = new Set(o.sezonlar.slice().sort((a, b) => b.puan - a.puan).slice(0, DONEM.ZIRVE_SEZON).map((s) => s.sezon));
+  $('#detay-ad').textContent = o.ad;
+  $('#detay-govde').innerHTML = `
+    <div style="display:flex;gap:16px;align-items:center;margin-bottom:6px">
+      <div class="buyuk-puan">${o.puan.toFixed(1)}</div>
+      <div><b>${esc(o.kulupler.join(', '))}</b><br><span class="soluk">${esc(ligAd(durum.lig))} ${aralikAd()} · ${esc(mevki(o.mevki)[1])} · ${o.mac} maç · ${o.gol} gol · ${o.asist} asist</span></div>
+    </div>
+    <div class="dokum">
+      <div class="dokum-satir"><span>Zirve<br><small>ağırlık %${Math.round(DONEM.ZIRVE_AGIRLIK * 100)}</small></span>
+        <div><div class="cubuk"><i style="width:${Math.round(o.zirve)}%"></i></div><small>En iyi ${DONEM.ZIRVE_SEZON} sezonunun ortalaması${o.sezonlar.length < DONEM.ZIRVE_SEZON ? ` (eksik sezonlar ${DONEM.EKSIK_DOLGU} sayıldı)` : ''}: ${o.zirve.toFixed(1)}</small></div>
+        <span class="sag"><b>+${(DONEM.ZIRVE_AGIRLIK * o.zirve).toFixed(1)}</b></span></div>
+      <div class="dokum-satir"><span>İstikrar<br><small>ağırlık %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)}</small></span>
+        <div><div class="cubuk"><i style="width:${Math.round(o.istikrar)}%"></i></div><small>Dönemde ${o.sezonlar.length} sezon düzenli oynadı.</small></div>
+        <span class="sag"><b>+${((1 - DONEM.ZIRVE_AGIRLIK) * o.istikrar).toFixed(1)}</b></span></div>
+    </div>
+    <table>
+      <thead><tr><th>Sezon</th><th>Kulüp</th><th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Asist</th><th class="sag">Puan</th></tr></thead>
+      <tbody>${o.sezonlar.map((s) => `
+        <tr data-sezon-puan="${s.sezon}:${s.oyuncu_id}:${s.kulup_id}" style="cursor:pointer">
+          <td>${sezonAd(s.sezon)}${enIyiler.has(s.sezon) ? ' ⭐' : ''}</td>
+          <td data-k="Kulüp">${esc(s.kulup_ad)}${s.sampiyon ? ' 🏆' : ''}</td>
+          <td data-k="Maç" class="sag">${s.mac}</td><td data-k="Gol" class="sag">${s.gol}</td><td data-k="Asist" class="sag">${s.asist}</td>
+          <td data-k="Puan" class="sag"><b>${s.puan.toFixed(1)}</b></td>
+        </tr>`).join('')}</tbody>
+    </table>
+    <p class="not">⭐ zirveye sayılan sezonlar. Bir sezona dokunun: o sezonun puan dökümü.</p>
+    <p><a href="#" data-kariyer="${o.oyuncu_id}">Kariyerini gör →</a></p>`;
+  if (!$('#detay').open) $('#detay').showModal();
+}
+function puanDokumu(anahtar) {
+  const o = sonPuanlar.find((x) => `${x.oyuncu_id}:${x.kulup_id}` === anahtar);
+  if (!o) return;
+  if (sonDonem) donemDokumu(o); else sezonDokumu(o, aralik()[0]);
 }
 
 // ---------- Arama ----------
@@ -301,6 +383,7 @@ async function ara(metin) {
 
 // ---------- Akış ----------
 async function goster() {
+  istekNo++;
   $('#ara').value = '';
   try {
     if (durum.gorunum === 'kulup') await kulupGoster();
@@ -318,6 +401,7 @@ function gorunumSec(g) {
   document.querySelectorAll('.sekme').forEach((b) => b.classList.toggle('aktif', b.dataset.gorunum === g));
   $('#kulup').closest('.alan').style.display = g === 'kulup' ? '' : 'none';
   $('#dizilis-alan').style.display = g === 'enIyi11' ? '' : 'none';
+  $('#bitis-alan').style.display = g === 'enIyi11' || g === 'puan' ? '' : 'none';
   $('#mevki-alan').style.display = g === 'puan' ? '' : 'none';
 }
 
@@ -339,11 +423,22 @@ $('#icerik').addEventListener('click', (e) => {
 });
 for (const d of Object.keys(DIZILISLER)) $('#dizilis').add(new Option(d, d));
 $('#dizilis').addEventListener('change', (e) => { durum.dizilis = e.target.value; goster(); });
+$('#sezon-bit').add(new Option('— (tek sezon)', ''));
+for (let s = BU_SEZON; s >= 2000; s--) $('#sezon-bit').add(new Option(sezonAd(s), s));
+$('#sezon-bit').addEventListener('change', (e) => { durum.sezonBit = e.target.value ? Number(e.target.value) : null; goster(); });
 $('#mevki-filtre').addEventListener('change', (e) => { durum.mevkiFiltre = e.target.value; goster(); });
 // Kariyerde bir sezona tıklayınca o kulübün o sezonki kadrosuna git
 $('#detay-govde').addEventListener('click', async (e) => {
   const k = e.target.closest('[data-kariyer]');
   if (k) { e.preventDefault(); return oyuncuDetay(Number(k.dataset.kariyer)); }
+  const sp = e.target.closest('[data-sezon-puan]');
+  if (sp) {
+    const [sz, oid, kid] = sp.dataset.sezonPuan.split(':').map(Number);
+    const liste = await ligPuanlari(durum.lig, sz);
+    const o = liste?.find((x) => x.oyuncu_id === oid && x.kulup_id === kid);
+    if (o) sezonDokumu(o, sz);
+    return;
+  }
   const tr = e.target.closest('tr[data-sezon]');
   if (!tr || !tr.dataset.lig) return;
   $('#detay').close();

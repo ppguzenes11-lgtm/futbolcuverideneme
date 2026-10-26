@@ -156,3 +156,56 @@ export function enIyi11(puanlilar, dizilis) {
   let k = 0;
   return satirlar.map((s) => s.map(() => sonuc[k++]));
 }
+
+// ---------- Dönem (sezon aralığı) puanı ----------
+export const DONEM = { ZIRVE_SEZON: 3, ZIRVE_AGIRLIK: 0.75, ISTIKRAR_SEZON: 5, EKSIK_DOLGU: 50 };
+
+/**
+ * Sezon puanlarını tek dönem puanında birleştirir.
+ * sezonlar: [{ sezon, puanlilar }] — puanlilar, puanla() çıktısı
+ * Dönem puanı = %75 zirve (en iyi 3 sezonun ortalaması; eksik sezonlar 50) + %25 istikrar (düzenli oynadığı sezon sayısı, en fazla 5)
+ */
+export function donemPuanla(sezonlar) {
+  const R = sezonlar.length;
+  const K = Math.min(DONEM.ZIRVE_SEZON, R);
+  const IST = Math.min(DONEM.ISTIKRAR_SEZON, R);
+  const oyuncu = new Map();
+  for (const { sezon, puanlilar } of sezonlar) {
+    // Aynı sezonda iki kulüpte oynadıysa daha yüksek puanlı satır sayılır
+    const enIyiSatir = new Map();
+    for (const s of puanlilar) {
+      if (s.sure < 0.25) continue;
+      const v = enIyiSatir.get(s.oyuncu_id);
+      if (!v || s.puan > v.puan) enIyiSatir.set(s.oyuncu_id, s);
+    }
+    for (const s of enIyiSatir.values()) {
+      if (!oyuncu.has(s.oyuncu_id)) oyuncu.set(s.oyuncu_id, []);
+      oyuncu.get(s.oyuncu_id).push({ ...s, sezon });
+    }
+  }
+  const sonuc = [];
+  for (const [id, liste] of oyuncu) {
+    liste.sort((a, b) => b.puan - a.puan);
+    const enIyiler = liste.slice(0, K).map((s) => s.puan);
+    while (enIyiler.length < K) enIyiler.push(DONEM.EKSIK_DOLGU);
+    const zirve = enIyiler.reduce((a, b) => a + b, 0) / K;
+    const istikrar = Math.min(1, liste.length / IST) * 100;
+    // Mevki ve kulüp: en çok dakika aldığı
+    const dk = (f) => { const m = new Map(); for (const s of liste) m.set(f(s), (m.get(f(s)) || 0) + s.dakika); return [...m].sort((a, b) => b[1] - a[1]); };
+    const anaGrup = dk((s) => s.grup)[0][0];
+    const anaSatir = liste.filter((s) => s.grup === anaGrup).sort((a, b) => b.dakika - a.dakika)[0];
+    const kulupler = dk((s) => s.kulup_ad).map(([ad]) => ad);
+    const top = (k) => liste.reduce((a, s) => a + (s[k] || 0), 0);
+    sonuc.push({
+      oyuncu_id: id, ad: liste[0].ad, uyruk: liste[0].uyruk,
+      grup: anaGrup, aile: anaSatir.aile, taraf: anaSatir.taraf, mevki: anaSatir.mevki,
+      kulup_id: anaSatir.kulup_id, kulup_ad: kulupler[0], kulupler,
+      sure: 1, // dönemde en az bir sezon düzenli oynadı (en iyi 11 seçimine uygun)
+      mac: top('mac'), gol: top('gol'), asist: top('asist'), dakika: top('dakika'),
+      sezonlar: liste.sort((a, b) => b.sezon - a.sezon), enIyiSezon: Math.max(...liste.map((s) => s.puan)),
+      zirve, istikrar, puan: DONEM.ZIRVE_AGIRLIK * zirve + (1 - DONEM.ZIRVE_AGIRLIK) * istikrar,
+      sampiyonluk: liste.filter((s) => s.sampiyon).length,
+    });
+  }
+  return sonuc.sort((a, b) => b.puan - a.puan);
+}
