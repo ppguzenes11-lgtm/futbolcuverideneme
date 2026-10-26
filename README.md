@@ -57,3 +57,9 @@ Sitede: **En iyi 11** (4-3-3, 4-2-3-1, 4-4-2, 3-5-2) ve **Puan sıralaması**; h
 **Sezon aralığı:** En iyi 11 ve Puan sıralamasında "Bitiş sezonu" seçilince dönem puanı hesaplanır:
 %80 zirve (oyuncunun aralıktaki en iyi 3 sezonunun ortalaması; 3'ten az sezonu varsa eksikler 50 sayılır) +
 %20 istikrar (iyi sezon değeri / 5; 90+ puanlı sezon 1, 80'lik yarım, 70 ve altı 0 sayılır). Ayarlar: `DONEM` (`js/puan.js`).
+
+**3. aşama — piyasa değerleri ve oyuncu profili**
+1. Supabase > SQL Editor'de `supabase/piyasa.sql` dosyasını çalıştırın.
+2. Transfermarkt konsolunda `scripts/piyasa_konsol.js` içeriğini çalıştırın (kulüp listesi 1. aşamadan gelir).
+
+Eklenen sütunlar: `oyuncular.dogum_tarihi / boy_cm / ayak`, `oyuncu_sezonlari.piyasa_degeri_eur / katilma_tarihi / geldigi_kulup`.
