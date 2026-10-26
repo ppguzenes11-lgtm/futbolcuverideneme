@@ -134,7 +134,11 @@ export const DIZILISLER = {
   '3-5-2': [[P.FV, P.FV], [P.SLB, P.OS, P.DOS, P.OS, P.SGB], [P.STP, P.STP, P.STP], [P.KL]],
 };
 
-/** Puanlanmış oyunculardan diziliş için en iyi 11. Asıl mevkisinde oynayan, yedek mevkiden önce gelir. */
+// Pozisyonun asıl mevkisi dışından (yakın mevkiden) seçilen oyuncuya uygulanan puan farkı
+const YAKIN_MEVKI_FARKI = 5;
+const TARAF_BELIRSIZ_FARKI = 3;
+
+/** Puanlanmış oyunculardan diziliş için en iyi 11. Yakın mevkiden gelen oyuncu ancak belirgin şekilde daha iyiyse seçilir. */
 export function enIyi11(puanlilar, dizilis) {
   const secilen = new Set();
   const satirlar = DIZILISLER[dizilis];
@@ -144,11 +148,13 @@ export function enIyi11(puanlilar, dizilis) {
   const sonuc = [];
   for (const { p, i } of yerler) {
     const [, , gruplar, taraf] = p;
-    const uygun = (o, kati) => !secilen.has(o.oyuncu_id) && gruplar.includes(o.grup) && o.sure >= 0.25
-      && (!taraf || o.taraf === taraf || (!kati && !o.taraf));
-    const aday = puanlilar.find((o) => uygun(o, true) && o.grup === gruplar[0])
-      || puanlilar.find((o) => uygun(o, true))
-      || puanlilar.find((o) => uygun(o, false));
+    let aday = null; let enIyiDeger = -Infinity;
+    for (const o of puanlilar) {
+      if (secilen.has(o.oyuncu_id) || o.sure < 0.25 || !gruplar.includes(o.grup)) continue;
+      if (taraf && o.taraf && o.taraf !== taraf) continue; // sağ beke sol bek konmaz
+      const deger = o.puan - (o.grup === gruplar[0] ? 0 : YAKIN_MEVKI_FARKI) - (taraf && !o.taraf ? TARAF_BELIRSIZ_FARKI : 0);
+      if (deger > enIyiDeger) { enIyiDeger = deger; aday = o; }
+    }
     if (aday) secilen.add(aday.oyuncu_id);
     sonuc[i] = { pozisyon: p, oyuncu: aday || null };
   }
@@ -158,12 +164,13 @@ export function enIyi11(puanlilar, dizilis) {
 }
 
 // ---------- Dönem (sezon aralığı) puanı ----------
-export const DONEM = { ZIRVE_SEZON: 3, ZIRVE_AGIRLIK: 0.75, ISTIKRAR_SEZON: 5, EKSIK_DOLGU: 50 };
+export const DONEM = { ZIRVE_SEZON: 3, ZIRVE_AGIRLIK: 0.75, ISTIKRAR_SEZON: 5, EKSIK_DOLGU: 50, IYI_SEZON: 70 };
 
 /**
  * Sezon puanlarını tek dönem puanında birleştirir.
  * sezonlar: [{ sezon, puanlilar }] — puanlilar, puanla() çıktısı
- * Dönem puanı = %75 zirve (en iyi 3 sezonun ortalaması; eksik sezonlar 50) + %25 istikrar (düzenli oynadığı sezon sayısı, en fazla 5)
+ * Dönem puanı = %75 zirve (en iyi 3 sezonun ortalaması; eksik sezonlar 50) + %25 istikrar (70+ puanlı iyi sezon sayısı, en fazla 5).
+ * İstikrar sadece iyi sezonları sayar: uzun ama vasat kariyer ödüllendirilmesin.
  */
 export function donemPuanla(sezonlar) {
   const R = sezonlar.length;
@@ -189,7 +196,8 @@ export function donemPuanla(sezonlar) {
     const enIyiler = liste.slice(0, K).map((s) => s.puan);
     while (enIyiler.length < K) enIyiler.push(DONEM.EKSIK_DOLGU);
     const zirve = enIyiler.reduce((a, b) => a + b, 0) / K;
-    const istikrar = Math.min(1, liste.length / IST) * 100;
+    const iyiSezon = liste.filter((s) => s.puan >= DONEM.IYI_SEZON).length;
+    const istikrar = Math.min(1, iyiSezon / IST) * 100;
     // Mevki ve kulüp: en çok dakika aldığı
     const dk = (f) => { const m = new Map(); for (const s of liste) m.set(f(s), (m.get(f(s)) || 0) + s.dakika); return [...m].sort((a, b) => b[1] - a[1]); };
     const anaGrup = dk((s) => s.grup)[0][0];
@@ -203,7 +211,7 @@ export function donemPuanla(sezonlar) {
       sure: 1, // dönemde en az bir sezon düzenli oynadı (en iyi 11 seçimine uygun)
       mac: top('mac'), gol: top('gol'), asist: top('asist'), dakika: top('dakika'),
       sezonlar: liste.sort((a, b) => b.sezon - a.sezon), enIyiSezon: Math.max(...liste.map((s) => s.puan)),
-      zirve, istikrar, puan: DONEM.ZIRVE_AGIRLIK * zirve + (1 - DONEM.ZIRVE_AGIRLIK) * istikrar,
+      zirve, istikrar, iyiSezon, istikrarHedef: IST, puan: DONEM.ZIRVE_AGIRLIK * zirve + (1 - DONEM.ZIRVE_AGIRLIK) * istikrar,
       sampiyonluk: liste.filter((s) => s.sampiyon).length,
     });
   }

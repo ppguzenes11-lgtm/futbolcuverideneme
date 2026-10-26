@@ -241,7 +241,7 @@ async function seciliPuanlar(no) {
 }
 const eksikNotu = (p) => (sonDonem && p.yuklenenSezon < p.istenenSezon
   ? `<p class="not">Aralıktaki ${p.istenenSezon} sezonun ${p.yuklenenSezon} tanesinin verisi yüklü; hesap yalnızca bunlarla yapıldı.</p>` : '');
-const donemNotu = () => (sonDonem ? `<p class="not">Dönem puanı: %${Math.round(DONEM.ZIRVE_AGIRLIK * 100)} zirve (en iyi ${DONEM.ZIRVE_SEZON} sezonun ortalaması) + %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)} istikrar (düzenli oynadığı sezon sayısı).</p>` : '');
+const donemNotu = () => (sonDonem ? `<p class="not">Dönem puanı: %${Math.round(DONEM.ZIRVE_AGIRLIK * 100)} zirve (en iyi ${DONEM.ZIRVE_SEZON} sezonun ortalaması) + %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)} istikrar (${DONEM.IYI_SEZON}+ puanlı iyi sezon sayısı, en fazla ${DONEM.ISTIKRAR_SEZON}). ⭐ zirveye sayılan sezonlar.</p>` : '');
 const kulupYazi = (o) => esc(o.kulupler ? o.kulupler[0] + (o.kulupler.length > 1 ? ` +${o.kulupler.length - 1}` : '') : o.kulup_ad);
 
 async function enIyi11Goster() {
@@ -345,9 +345,10 @@ function donemDokumu(o) {
         <div><div class="cubuk"><i style="width:${Math.round(o.zirve)}%"></i></div><small>En iyi ${DONEM.ZIRVE_SEZON} sezonunun ortalaması${o.sezonlar.length < DONEM.ZIRVE_SEZON ? ` (eksik sezonlar ${DONEM.EKSIK_DOLGU} sayıldı)` : ''}: ${o.zirve.toFixed(1)}</small></div>
         <span class="sag"><b>+${(DONEM.ZIRVE_AGIRLIK * o.zirve).toFixed(1)}</b></span></div>
       <div class="dokum-satir"><span>İstikrar<br><small>ağırlık %${Math.round((1 - DONEM.ZIRVE_AGIRLIK) * 100)}</small></span>
-        <div><div class="cubuk"><i style="width:${Math.round(o.istikrar)}%"></i></div><small>Dönemde ${o.sezonlar.length} sezon düzenli oynadı.</small></div>
+        <div><div class="cubuk"><i style="width:${Math.round(o.istikrar)}%"></i></div><small>${o.iyiSezon} iyi sezon (${DONEM.IYI_SEZON}+ puan) · tam puan için ${o.istikrarHedef}</small></div>
         <span class="sag"><b>+${((1 - DONEM.ZIRVE_AGIRLIK) * o.istikrar).toFixed(1)}</b></span></div>
     </div>
+    <p class="not">⭐ zirveye sayılan en iyi ${DONEM.ZIRVE_SEZON} sezon · Bir sezona dokunun: o sezonun puan dökümü.</p>
     <table>
       <thead><tr><th>Sezon</th><th>Kulüp</th><th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Asist</th><th class="sag">Puan</th></tr></thead>
       <tbody>${o.sezonlar.map((s) => `
@@ -358,7 +359,6 @@ function donemDokumu(o) {
           <td data-k="Puan" class="sag"><b>${s.puan.toFixed(1)}</b></td>
         </tr>`).join('')}</tbody>
     </table>
-    <p class="not">⭐ zirveye sayılan sezonlar. Bir sezona dokunun: o sezonun puan dökümü.</p>
     <p><a href="#" data-kariyer="${o.oyuncu_id}">Kariyerini gör →</a></p>`;
   if (!$('#detay').open) $('#detay').showModal();
 }
