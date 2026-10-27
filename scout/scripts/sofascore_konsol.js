@@ -12,7 +12,7 @@
     { id: 52, ad: 'Süper Lig' },
     { id: 37, ad: 'Eredivisie' },
   ];
-  const ILK_SEZON = 16;   // 16/17
+  const ILK_SEZON = 2016; // 16/17
   const BEKLEME = 500;    // istekler arası ms — siteyi yormamak için
   const DENEME_MAC = 3;   // deneme modunda çekilecek maç sayısı
 
@@ -25,6 +25,8 @@
   const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   const sayiMi = (v) => typeof v === 'number' && Number.isFinite(v);
   const tarih = (ts) => (sayiMi(ts) ? new Date(ts * 1000).toISOString() : null);
+  // '99/00' → 1999, '16/17' → 2016
+  const sezonYili = (y) => { const a = Number(y.slice(0, 2)); return a >= 50 ? 1900 + a : 2000 + a; };
   const gun = (ts) => (sayiMi(ts) ? new Date(ts * 1000).toISOString().slice(0, 10) : null);
   const oran = (f) => {
     if (!f) return null;
@@ -227,8 +229,8 @@
   try {
     for (const lig of LIGLER) {
       const sezonlar = (await al(`unique-tournament/${lig.id}/seasons`)).seasons
-        .filter((s) => /^\d\d\/\d\d$/.test(s.year) && Number(s.year.slice(0, 2)) >= ILK_SEZON)
-        .sort((a, b) => b.year.localeCompare(a.year)); // en yeni sezon önce
+        .filter((s) => /^\d\d\/\d\d$/.test(s.year) && sezonYili(s.year) >= ILK_SEZON)
+        .sort((a, b) => sezonYili(b.year) - sezonYili(a.year)); // en yeni sezon önce
       for (const sezon of sezonlar) {
         const maclar = await sezonMaclari(lig, sezon);
         const kalan = maclar.filter((m) => !bitenMaclar.has(m.id));
