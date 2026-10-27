@@ -64,6 +64,14 @@ Sitede: **En iyi 11** (4-3-3, 4-2-3-1, 4-4-2, 3-5-2) ve **Puan sıralaması**; h
 
 Eklenen sütunlar: `oyuncular.dogum_tarihi / boy_cm / ayak`, `oyuncu_sezonlari.piyasa_degeri_eur / katilma_tarihi / geldigi_kulup`.
 
+**4. aşama — Avrupa kupaları (Şampiyonlar Ligi, Avrupa Ligi / UEFA Kupası)**
+1. Supabase > SQL Editor'de `supabase/avrupa.sql` dosyasını çalıştırın (yazma izinlerini de geçici açar).
+2. Transfermarkt konsolunda `scripts/avrupa_konsol.js` içeriğini çalıştırın. Her sezonun katılımcıları okunur,
+   8 ligdeki kulüplerin turnuva istatistikleri `oyuncu_turnuvalari` tablosuna `turnuva_kod` = `CL` / `EL` ile yazılır.
+3. Bitince SQL dosyasının sonundaki komutla yazma izinlerini kapatın.
+
+Tablo: `turnuva_sampiyonlari` (turnuvayı kazanan kulüp, sezon başına).
+
 ## Keşfet (`js/kesfet.js`)
 
 Rekorlar, unvanlar ve ligler arası karşılaştırmalar. İstatistikler önceden hesaplanır:
