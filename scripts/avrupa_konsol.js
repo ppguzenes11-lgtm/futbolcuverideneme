@@ -12,8 +12,10 @@
   const ILK_SEZON = 2000;
   const TURNUVALAR = [
     { kod: 'CL', ad: 'Şampiyonlar Ligi', slug: 'uefa-champions-league' },
-    { kod: 'EL', ad: 'Avrupa Ligi / UEFA Kupası', slug: 'europa-league' },
+    // 2008/09 ve öncesi Transfermarkt'ta ayrı turnuva: UEFA Kupası (kod UEFA); veritabanına yine EL olarak yazılır
+    { kod: 'EL', ad: 'Avrupa Ligi / UEFA Kupası', slug: 'europa-league', eski: { kod: 'UEFA', slug: 'uefa-cup', sonSezon: 2008 } },
   ];
+  const kaynak = (t, sezon) => (t.eski && sezon <= t.eski.sonSezon ? { ...t, kod: t.eski.kod, slug: t.eski.slug, dbKod: t.kod } : { ...t, dbKod: t.kod });
   const BEKLEME = 3000;          // sayfalar arası ms — siteyi yormamak için
   const GUNCEL_YENILE_GUN = 7;   // bu sezonun sayfaları kaç günde bir yeniden çekilsin
   const YEDEK_SIRA = { CL: 5, EL: 8 }; // katılımcı listesi okunamazsa: ligde puan ortalaması sırası bu kadar olan kulüpler denenir
@@ -183,13 +185,14 @@
 
     // 2) Sezon sezon katılımcılar ve kadro istatistikleri (en yeni sezondan geriye)
     for (let sezon = BU_SEZON; sezon >= ILK_SEZON; sezon--) {
-      for (const t of TURNUVALAR) {
+      for (const t0 of TURNUVALAR) {
+        const t = kaynak(t0, sezon);
         const bizim = ligde.get(sezon) || new Set();
         let ids = [...(await katilimcilar(t, sezon))].filter((id) => bizim.has(id) && kulup.has(id));
         sayfaSay++;
         await bekle(BEKLEME);
         if (!ids.length) {
-          ids = [...yedekKulupler(sezon, YEDEK_SIRA[t.kod])].filter((id) => bizim.has(id) && kulup.has(id));
+          ids = [...yedekKulupler(sezon, YEDEK_SIRA[t.dbKod])].filter((id) => bizim.has(id) && kulup.has(id));
           console.warn(`${t.ad} ${sezonAd(sezon)}: katılımcı listesi okunamadı, ${ids.length} aday kulüp denenecek.`);
         }
         const kalan = ids.filter((id) => !tamamMi(`avrupa:${t.kod}:${id}:${sezon}`, sezon));
@@ -201,7 +204,7 @@
           sayfaSay++;
           if (satirlar?.length) {
             await sbYaz('oyuncular', tekil(satirlar.map((s) => s.oyuncu), (o) => o.id), { cakisma: 'id', sadeceYeni: true });
-            await sbYaz('oyuncu_turnuvalari', tekil(satirlar.map(({ oyuncu, ...s }) => ({ oyuncu_id: oyuncu.id, kulup_id: id, sezon, turnuva_kod: t.kod, ...s })), (s) => s.oyuncu_id),
+            await sbYaz('oyuncu_turnuvalari', tekil(satirlar.map(({ oyuncu, ...s }) => ({ oyuncu_id: oyuncu.id, kulup_id: id, sezon, turnuva_kod: t.dbKod, ...s })), (s) => s.oyuncu_id),
               { cakisma: 'oyuncu_id,kulup_id,sezon,turnuva_kod' });
             satirSay += satirlar.length;
             const mac = Math.max(0, ...satirlar.map((s) => s.mac));
