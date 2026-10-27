@@ -68,3 +68,12 @@ Eklenen sütunlar: `oyuncular.dogum_tarihi / boy_cm / ayak`, `oyuncu_sezonlari.p
 
 Rekorlar, unvanlar ve ligler arası karşılaştırmalar. İstatistikler önceden hesaplanır:
 `python scripts/kesfet_uret.py` → `veri/kesfet.json` (veri yenilendikçe tekrar çalıştırılır).
+
+## Puan v2: piyasa değeri ve lig gücü (`js/puan.js` → `dunyaKatmani`)
+
+- **Piyasa değeri (P, %20):** oyuncunun sezon değerinin, 8 ligde aynı mevki ailesi ve yaş grubundaki oyuncular arasındaki yüzdelik dilimi
+  (ligde düzenli oynayanların en az yarısının değeri yoksa kullanılmaz; Transfermarkt değerleri ~2004'ten itibaren).
+- **Lig gücü:** √(ligin ortalama kadro değeri / o sezonun en güçlü ligininki). Yalnızca "🌍 Tüm ligler" görünümünde
+  çarpan olarak uygulanır: dünya puanı = lig içi puan × (0,75 + 0,25 × lig gücü).
+- Puanlar önceden hesaplanır: `NODE_USE_ENV_PROXY=1 node scripts/puan_uret.mjs` → `veri/puan/<sezon>.json`
+  (veri değişince tekrar çalıştırın; site dosya yoksa canlı veriden lig içi puan hesaplar).

@@ -1,10 +1,11 @@
 import { db } from './db.js';
 import { kesfetGoster } from './kesfet.js';
-import { puanla, enIyi11, DIZILISLER, BILESEN_AD, donemPuanla, DONEM } from './puan.js';
+import { puanla, enIyi11, DIZILISLER, BILESEN_AD, donemPuanla, DONEM, grupBul } from './puan.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const sayi = (n) => Number(n || 0).toLocaleString('tr-TR');
+const euro = (n) => (n >= 1e6 ? `€${(n / 1e6).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} mn` : `€${Math.round(n / 1e3).toLocaleString('tr-TR')} bin`);
 
 // Transfermarkt mevkileri (İngilizce) -> grup ve Türkçe ad
 const MEVKI = {
@@ -34,7 +35,8 @@ function hata(e) {
     : `Veriler yüklenemedi: ${esc(e.message)}`}</div>`;
 }
 const bos = (mesaj) => { $('#ozet').innerHTML = ''; $('#icerik').innerHTML = `<div class="bilgi">${mesaj}</div>`; };
-const ligAd = (kod) => ligler.find((l) => l.kod === kod)?.ad || kod;
+const TUM = 'TUM'; // 8 lig birlikte (yalnızca En iyi 11 ve Puan sıralamasında)
+const ligAd = (kod) => (kod === TUM ? 'Tüm ligler' : ligler.find((l) => l.kod === kod)?.ad || kod);
 
 // ---------- Seçiciler ----------
 async function ligleriYukle() {
@@ -42,7 +44,8 @@ async function ligleriYukle() {
   if (error) throw error;
   const sira = ['TR1', 'GB1', 'ES1', 'IT1', 'L1', 'FR1', 'PO1', 'NL1'];
   ligler = data.sort((a, b) => sira.indexOf(a.kod) - sira.indexOf(b.kod));
-  $('#lig').innerHTML = ligler.map((l) => `<option value="${l.kod}">${esc(l.ad)} · ${esc(l.ulke)}</option>`).join('');
+  $('#lig').innerHTML = `<option value="${TUM}" hidden>🌍 Tüm ligler (8 lig)</option>`
+    + ligler.map((l) => `<option value="${l.kod}">${esc(l.ad)} · ${esc(l.ulke)}</option>`).join('');
   $('#lig').value = durum.lig;
   for (let s = BU_SEZON; s >= 2000; s--) $('#sezon').add(new Option(sezonAd(s), s));
 }
@@ -73,6 +76,7 @@ async function kulupGoster() {
     ['Oynayan oyuncu', `${oynayan.length}<small class="soluk"> / ${data.length}</small>`],
     ['Toplam gol', sayi(data.reduce((a, r) => a + r.gol, 0))],
     ['En golcü', golcu?.gol ? `${esc(golcu.oyuncular.ad)} <small class="soluk">${golcu.gol}</small>` : '-'],
+    ['Kadro değeri', (() => { const t = data.reduce((a, r) => a + (r.piyasa_degeri_eur || 0), 0); return t ? esc(euro(t)) : '-'; })()],
     ['Yaş ort. · yabancı', `${yaslar.length ? (yaslar.reduce((a, b) => a + b, 0) / yaslar.length).toLocaleString('tr-TR', { maximumFractionDigits: 1 }) : '-'} · ${data.filter((r) => yabanciMi(r.oyuncular.uyruk, ulke)).length}`],
   ].map(([e, d]) => `<div class="stat"><b>${d}</b><span>${e}</span></div>`).join('');
 
@@ -82,7 +86,7 @@ async function kulupGoster() {
     <div class="grup">
       <h3>${g} · ${gruplar[g].length}</h3>
       <table>
-        <thead><tr><th>#</th><th>Oyuncu</th><th>Yaş</th><th>Uyruk</th><th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Asist</th><th class="sag">Dakika</th><th class="sag">Kart</th></tr></thead>
+        <thead><tr><th>#</th><th>Oyuncu</th><th>Yaş</th><th>Uyruk</th><th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Asist</th><th class="sag">Dakika</th><th class="sag">Kart</th><th class="sag">Değer</th></tr></thead>
         <tbody>${gruplar[g].sort((a, b) => b.dakika - a.dakika || b.kadroda - a.kadroda).map((r) => `
           <tr data-id="${r.oyuncu_id}">
             <td class="no">${esc(r.forma_no || '-')}</td>
@@ -94,6 +98,7 @@ async function kulupGoster() {
             <td data-k="Asist" class="sag">${r.asist || '<span class="soluk">–</span>'}</td>
             <td data-k="Dakika" class="sag">${r.dakika ? sayi(r.dakika) : '<span class="soluk">–</span>'}</td>
             <td data-k="Kart" class="sag">${kart(r)}</td>
+            <td data-k="Değer" class="sag">${r.piyasa_degeri_eur ? esc(euro(r.piyasa_degeri_eur)) : '<span class="soluk">–</span>'}</td>
           </tr>`).join('')}
         </tbody>
       </table>
@@ -158,41 +163,111 @@ async function kralligGoster(alan) {
 }
 
 // ---------- Oyuncu kariyeri ----------
+const AYAK = { right: 'Sağ ayak', left: 'Sol ayak', both: 'İki ayak' };
+const yasHesap = (dt) => { if (!dt) return null; const d = new Date(dt); const n = new Date(); return n.getFullYear() - d.getFullYear() - ((n.getMonth() < d.getMonth() || (n.getMonth() === d.getMonth() && n.getDate() < d.getDate())) ? 1 : 0); };
+
+/** Piyasa değeri grafiği (tek seri): sezon başına en yüksek değer; üzerinde gezinince sezon ve değer */
+function degerGrafik(noktalar) {
+  if (noktalar.length < 2) return '';
+  const W = 560; const H = 170; const sol = 52; const sag = 10; const ust = 10; const alt = 24;
+  const x0 = noktalar[0][0]; const x1 = noktalar[noktalar.length - 1][0];
+  const y1 = Math.max(...noktalar.map((n) => n[1])) * 1.08;
+  const px = (x) => sol + (x1 === x0 ? 0.5 : (x - x0) / (x1 - x0)) * (W - sol - sag);
+  const py = (y) => ust + (1 - y / y1) * (H - ust - alt);
+  const yol = noktalar.map(([x, y], i) => `${i ? 'L' : 'M'}${px(x).toFixed(1)},${py(y).toFixed(1)}`).join('');
+  const alan = `${yol}L${px(x1).toFixed(1)},${py(0)}L${px(x0).toFixed(1)},${py(0)}Z`;
+  const enY = noktalar.reduce((a, b) => (b[1] > a[1] ? b : a));
+  const adim = Math.max(1, Math.ceil((x1 - x0) / 6));
+  const yillar = []; for (let x = x0; x <= x1; x += adim) yillar.push(x);
+  return `
+    <div class="deger-grafik" data-noktalar='${JSON.stringify(noktalar)}' data-geo='${JSON.stringify({ W, sol, sag, x0, x1 })}'>
+      <svg viewBox="0 0 ${W} ${H}" class="trend" role="img" aria-label="Piyasa değeri, sezonlara göre">
+        ${[0.5, 1].map((f) => `<line x1="${sol}" x2="${W - sag}" y1="${py(y1 * f / 1.08)}" y2="${py(y1 * f / 1.08)}" class="izgara"/><text x="${sol - 6}" y="${py(y1 * f / 1.08) + 4}" class="eksen" text-anchor="end">${esc(euro(y1 * f / 1.08))}</text>`).join('')}
+        ${yillar.map((x) => `<text x="${px(x)}" y="${H - 6}" class="eksen" text-anchor="middle">${sezonAd(x)}</text>`).join('')}
+        <path d="${alan}" class="deger-alan"/><path d="${yol}" class="seri vurgu"/>
+        <circle cx="${px(enY[0])}" cy="${py(enY[1])}" r="4.5" class="imlec-nokta"/>
+        <text x="${px(enY[0])}" y="${py(enY[1]) - 9}" class="eksen deger-etiket" text-anchor="middle">${esc(euro(enY[1]))}</text>
+        <line class="imlec" y1="${ust}" y2="${H - alt}" style="display:none"/>
+        <rect class="hedef" x="${sol}" y="0" width="${W - sol - sag}" height="${H}" fill="transparent"/>
+      </svg>
+      <div class="ipucu" style="display:none"></div>
+    </div>`;
+}
+function degerGrafikEtkilesim(kok) {
+  const g = kok.querySelector('.deger-grafik');
+  if (!g) return;
+  const n = JSON.parse(g.dataset.noktalar); const geo = JSON.parse(g.dataset.geo);
+  const svg = g.querySelector('svg'); const ip = g.querySelector('.ipucu'); const im = svg.querySelector('.imlec');
+  const goster = (ev) => {
+    const r = svg.getBoundingClientRect();
+    const x = ((ev.clientX - r.left) / r.width) * geo.W;
+    const yil = Math.round(geo.x0 + ((x - geo.sol) / (geo.W - geo.sol - geo.sag)) * (geo.x1 - geo.x0));
+    const p = n.find((q) => q[0] === yil);
+    if (!p) return;
+    const xp = geo.sol + ((yil - geo.x0) / (geo.x1 - geo.x0 || 1)) * (geo.W - geo.sol - geo.sag);
+    im.setAttribute('x1', xp); im.setAttribute('x2', xp); im.style.display = '';
+    ip.innerHTML = `<b>${sezonAd(yil)}</b><div class="vurgu"><span>${esc(p[2])}</span><span>${esc(euro(p[1]))}</span></div>`;
+    ip.style.display = '';
+    const k = g.getBoundingClientRect(); const sola = ev.clientX - k.left > k.width / 2;
+    ip.style.left = sola ? '' : `${ev.clientX - k.left + 12}px`; ip.style.right = sola ? `${k.right - ev.clientX + 12}px` : '';
+  };
+  const h = svg.querySelector('.hedef');
+  h.addEventListener('pointermove', goster); h.addEventListener('pointerdown', goster);
+  h.addEventListener('pointerleave', () => { ip.style.display = 'none'; im.style.display = 'none'; });
+}
+
 async function oyuncuDetay(id) {
-  const [{ data: o }, { data, error }] = await Promise.all([
+  const [{ data: o }, { data, error }, { data: ligSat }] = await Promise.all([
     db().from('oyuncular').select('*').eq('id', id).single(),
     db().from('oyuncu_sezonlari').select('*,kulupler(ad)').eq('oyuncu_id', id).order('sezon', { ascending: false }),
+    db().from('oyuncu_turnuvalari').select('kulup_id,sezon,turnuva_kod,mac,gol,asist').eq('oyuncu_id', id),
   ]);
   if (error || !o) return;
   // Kulübün o sezon hangi ligde olduğu
   const { data: lk } = await db().from('lig_kulupleri').select('lig_kod,sezon,kulup_id').in('kulup_id', [...new Set(data.map((r) => r.kulup_id))]);
   const ligi = (r) => lk?.find((x) => x.kulup_id === r.kulup_id && x.sezon === r.sezon)?.lig_kod;
+  const ligIst = new Map((ligSat || []).map((r) => [`${r.kulup_id}:${r.sezon}`, r]));
+  const oynanan = data.filter((r) => r.mac > 0 || ligIst.get(`${r.kulup_id}:${r.sezon}`)?.mac);
   const top = (k) => data.reduce((a, r) => a + (r[k] || 0), 0);
+  const ligTop = (k) => (ligSat || []).reduce((a, r) => a + (r[k] || 0), 0);
+  // Değer grafiği: sezon başına en yüksek değer (sezon içinde kulüp değiştirdiyse ikisinden büyüğü)
+  const degerSezon = new Map();
+  for (const r of data) if (r.piyasa_degeri_eur && (!degerSezon.has(r.sezon) || r.piyasa_degeri_eur > degerSezon.get(r.sezon)[1])) degerSezon.set(r.sezon, [r.sezon, r.piyasa_degeri_eur, r.kulupler.ad]);
+  const degerler = [...degerSezon.values()].sort((a, b) => a[0] - b[0]);
+  const zirve = degerler.length ? degerler.reduce((a, b) => (b[1] > a[1] ? b : a)) : null;
+  const yas = yasHesap(o.dogum_tarihi);
 
   $('#detay-ad').textContent = o.ad;
   $('#detay-govde').innerHTML = `
     <div class="etiketler">
       <span class="etiket">${esc(mevki(o.mevki)[1])}</span>
       ${o.uyruk ? `<span class="etiket">${esc(o.uyruk)}</span>` : ''}
-      <span class="etiket">${data.length} sezon · ${new Set(data.map((r) => r.kulup_id)).size} kulüp</span>
+      ${o.dogum_tarihi ? `<span class="etiket">${new Date(o.dogum_tarihi).toLocaleDateString('tr-TR')}${yas != null ? ` · ${yas} yaş` : ''}</span>` : ''}
+      ${o.boy_cm ? `<span class="etiket">${o.boy_cm} cm</span>` : ''}
+      ${o.ayak ? `<span class="etiket">${AYAK[o.ayak] || esc(o.ayak)}</span>` : ''}
+      <span class="etiket">${oynanan.length} sezon · ${new Set(oynanan.map((r) => r.kulup_id)).size} kulüp</span>
     </div>
     <div class="kariyer-toplam">
-      ${[['Maç', top('mac')], ['Gol', top('gol')], ['Asist', top('asist')], ['Dakika', top('dakika')]].map(([e, d]) => `<div class="stat"><b>${sayi(d)}</b><span>${e}</span></div>`).join('')}
+      ${[['Maç', top('mac')], ['Gol', top('gol')], ['Lig golü', ligTop('gol')], ['Asist', top('asist')]].map(([e, d]) => `<div class="stat"><b>${sayi(d)}</b><span>${e}</span></div>`).join('')}
     </div>
+    ${degerler.length >= 2 ? `<h4 class="ara-baslik">Piyasa değeri${zirve ? ` <small class="soluk">· zirve ${esc(euro(zirve[1]))} (${sezonAd(zirve[0])})</small>` : ''}</h4>${degerGrafik(degerler)}` : ''}
+    <h4 class="ara-baslik">Sezonlar</h4>
     <table>
-      <thead><tr><th>Sezon</th><th>Kulüp</th><th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Asist</th><th class="sag">Dakika</th></tr></thead>
-      <tbody>${data.map((r) => `
+      <thead><tr><th>Sezon</th><th>Kulüp</th><th class="sag">Maç</th><th class="sag">Gol</th><th class="sag">Lig golü</th><th class="sag">Asist</th><th class="sag">Değer</th></tr></thead>
+      <tbody>${data.map((r) => { const li = ligIst.get(`${r.kulup_id}:${r.sezon}`); return `
         <tr data-sezon="${r.sezon}" data-kulup="${r.kulup_id}" data-lig="${ligi(r) || ''}">
           <td>${sezonAd(r.sezon)}</td>
           <td data-k="Kulüp">${esc(r.kulupler.ad)}${ligi(r) ? ` <small class="soluk">${esc(ligAd(ligi(r)))}</small>` : ''}</td>
           <td data-k="Maç" class="sag">${r.mac}</td>
           <td data-k="Gol" class="sag">${r.gol ? `<b>${r.gol}</b>` : r.gol}</td>
+          <td data-k="Lig golü" class="sag">${li ? li.gol : '–'}</td>
           <td data-k="Asist" class="sag">${r.asist}</td>
-          <td data-k="Dakika" class="sag">${sayi(r.dakika)}</td>
-        </tr>`).join('')}</tbody>
+          <td data-k="Değer" class="sag">${r.piyasa_degeri_eur ? esc(euro(r.piyasa_degeri_eur)) : '–'}</td>
+        </tr>`; }).join('')}</tbody>
     </table>
-    <p class="soluk" style="font-size:12px">Sadece 8 ligdeki kulüplerde oynadığı sezonlar; tüm turnuvalar toplamı.</p>
+    <p class="soluk" style="font-size:12px">Sadece 8 ligdeki kulüplerde oynadığı sezonlar. Maç, gol ve asist tüm turnuvaların toplamı; "Lig golü" yalnızca lig maçları. Bir sezona dokunun: o kulübün kadrosu.</p>
     <p><a href="https://www.transfermarkt.com/x/profil/spieler/${o.id}" target="_blank" rel="noopener">Transfermarkt profili ↗</a></p>`;
+  degerGrafikEtkilesim($('#detay-govde'));
   if (!$('#detay').open) $('#detay').showModal();
 }
 
@@ -207,10 +282,38 @@ async function hepsiniOku(sorgu) {
     if (data.length < 1000) return out;
   }
 }
-/** Lig sezonunun puanlanmış oyuncuları (sadece lig maçları) */
+// Önceden hesaplanmış sezon puanları (scripts/puan_uret.mjs → veri/puan/<sezon>.json): piyasa değeri ve lig gücü dahil
+const sezonDosyasi = new Map();
+async function sezonPuanDosyasi(sezon) {
+  if (!sezonDosyasi.has(sezon)) {
+    sezonDosyasi.set(sezon, fetch(`veri/puan/${sezon}.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => d && d.satirlar.map((r) => {
+      const [grup, aile, taraf] = grupBul(r.m);
+      const katki = Object.fromEntries(Object.keys(r.w).map((b) => [b, r.w[b] * r.b[b]]));
+      return {
+        oyuncu_id: r.o, kulup_id: r.k, lig: r.l, ad: r.ad, uyruk: r.u, kulup_ad: r.ka, mevki: r.m, yas: r.y, deger: r.dg,
+        grup, aile, taraf, mac: r.mac, gol: r.gol, asist: r.as, dakika: r.dk, sari: r.sa, ikinci_sari: r.is, kirmizi: r.ki,
+        sure: r.su, etki: r.et, on: r.on, off: r.of, bilesen: r.b, agirlik: r.w, katki, sampiyonBonus: r.sb, sampiyon: !!r.sp,
+        puanLig: r.pl, puanLigIci: r.p, carpan: r.c, ligGucu: d.ligGucu[r.l], puanDunya: r.pd, puan: r.p,
+      };
+    })));
+  }
+  return sezonDosyasi.get(sezon);
+}
+/** Lig sezonunun puanlanmış oyuncuları (sadece lig maçları). lig = TUM: 8 lig birlikte, dünya puanıyla. */
 async function ligPuanlari(lig, sezon) {
   const anahtar = `${lig}:${sezon}`;
   if (puanOnbellek.has(anahtar)) return puanOnbellek.get(anahtar);
+  const dosya = await sezonPuanDosyasi(sezon);
+  if (dosya) {
+    const sonuc = lig === TUM
+      ? dosya.map((r) => ({ ...r, puan: r.puanDunya, dunya: true })).sort((a, b) => b.puan - a.puan)
+      : dosya.filter((r) => r.lig === lig).sort((a, b) => b.puan - a.puan);
+    const s2 = sonuc.length ? sonuc : null;
+    puanOnbellek.set(anahtar, s2);
+    return s2;
+  }
+  if (lig === TUM) return null;
+  // Yedek: dosya yoksa (örn. yeni sezon) canlı veriden lig içi puan
   const [ot, kt] = await Promise.all([
     hepsiniOku(() => db().from('oyuncu_turnuvalari').select('*,oyuncular(ad,uyruk,mevki),kulupler(ad)').eq('turnuva_kod', lig).eq('sezon', sezon)),
     hepsiniOku(() => db().from('kulup_turnuvalari').select('*').eq('turnuva_kod', lig).eq('sezon', sezon)),
@@ -315,7 +418,7 @@ async function puanSiralamaGoster() {
           <tr data-puan="${o.oyuncu_id}:${o.kulup_id}">
             <td class="sira">${i + 1}</td>
             <td class="ad"><b>${esc(o.ad)}</b><small>${esc(mevki(o.mevki)[1])}</small></td>
-            <td data-k="Kulüp">${kulupYazi(o)}${o.sampiyon || o.sampiyonluk ? ` 🏆${o.sampiyonluk > 1 ? '×' + o.sampiyonluk : ''}` : ''}</td>
+            <td data-k="Kulüp">${kulupYazi(o)}${o.sampiyon || o.sampiyonluk ? ` 🏆${o.sampiyonluk > 1 ? '×' + o.sampiyonluk : ''}` : ''}${durum.lig === TUM && o.lig ? `<small class="soluk" style="display:block">${esc(ligAd(o.lig))}</small>` : ''}</td>
             ${sonDonem ? `<td data-k="Sezon" class="sag">${o.sezonlar.length}</td>` : ''}
             <td data-k="Maç" class="sag">${o.mac}</td>
             <td data-k="Gol" class="sag">${o.gol}</td>
@@ -333,6 +436,7 @@ const BILESEN_ACIKLAMA = {
   T: (o) => `Kulübünün ligdeki başarı sırası${o.sure < 0.6 ? ', süresi az olduğu için kısmen' : ''}.`,
   U: (o) => `${o.gol} gol, ${o.asist} asist · aynı mevkidekilere göre 90 dk başına.`,
   D: (o) => `${o.sari} sarı, ${o.ikinci_sari} ikinci sarı, ${o.kirmizi} kırmızı.`,
+  P: (o) => `${o.deger ? euro(o.deger) : '-'}${o.yas ? ` · ${o.yas} yaşında` : ''} · 8 ligde aynı mevki ve yaş grubundakilere göre.`,
 };
 /** Tek sezon puan dökümü */
 function sezonDokumu(o, sezon) {
@@ -340,8 +444,9 @@ function sezonDokumu(o, sezon) {
   $('#detay-govde').innerHTML = `
     <div style="display:flex;gap:16px;align-items:center;margin-bottom:6px">
       <div class="buyuk-puan">${o.puan.toFixed(1)}</div>
-      <div><b>${esc(o.kulup_ad)}</b> · ${esc(ligAd(durum.lig))} ${sezonAd(sezon)}<br><span class="soluk">${esc(mevki(o.mevki)[1])} · ${o.mac} maç · ${o.gol} gol · ${o.asist} asist</span></div>
+      <div><b>${esc(o.kulup_ad)}</b> · ${esc(ligAd(o.lig || durum.lig))} ${sezonAd(sezon)}<br><span class="soluk">${esc(mevki(o.mevki)[1])} · ${o.mac} maç · ${o.gol} gol · ${o.asist} asist</span></div>
     </div>
+    ${o.dunya ? `<p class="not" style="margin:0 0 6px">Tüm ligler görünümü: lig içi puan ${o.puanLigIci.toFixed(1)} × lig gücü çarpanı ${o.carpan.toFixed(2)} (${esc(ligAd(o.lig))}) = <b>${o.puan.toFixed(1)}</b></p>` : ''}
     <div class="dokum">${Object.keys(o.agirlik).map((b) => `
       <div class="dokum-satir">
         <span>${BILESEN_AD[b]}<br><small>ağırlık %${Math.round(o.agirlik[b] * 100)}</small></span>
@@ -428,6 +533,9 @@ function gorunumSec(g) {
   $('#dizilis-alan').style.display = g === 'enIyi11' ? '' : 'none';
   $('#bitis-alan').style.display = g === 'enIyi11' || g === 'puan' ? '' : 'none';
   $('#mevki-alan').style.display = g === 'puan' ? '' : 'none';
+  const puanSekmesi = g === 'enIyi11' || g === 'puan';
+  $('#lig').querySelector(`option[value="${TUM}"]`).hidden = !puanSekmesi;
+  if (!puanSekmesi && durum.lig === TUM) { durum.lig = 'TR1'; $('#lig').value = 'TR1'; kulupleriYukle().catch(() => {}); }
 }
 
 $('#lig').addEventListener('change', (e) => { durum.lig = e.target.value; ligSezonDegisti(); });

@@ -54,7 +54,7 @@ def main():
     lk = hepsi("lig_kulupleri", "lig_kod,sezon,kulup_id")
     kt = hepsi("kulup_turnuvalari", "kulup_id,sezon,turnuva_kod,mac_basi_puan")
     ot = hepsi("oyuncu_turnuvalari", "oyuncu_id,kulup_id,sezon,turnuva_kod,kadroda,mac,gol,asist,sari,ikinci_sari,kirmizi,oyuna_girdi,dakika")
-    os_ = hepsi("oyuncu_sezonlari", "oyuncu_id,kulup_id,sezon,yas,piyasa_degeri_eur")
+    os_ = hepsi("oyuncu_sezonlari", "oyuncu_id,kulup_id,sezon,yas,piyasa_degeri_eur,katilma_tarihi,geldigi_kulup")
     print(f"{len(oyuncular)} oyuncu, {len(ot)} lig satırı, {len(os_)} sezon satırı")
 
     yas = {(r["oyuncu_id"], r["kulup_id"], r["sezon"]): r["yas"] for r in os_}
@@ -235,6 +235,71 @@ def main():
     boylu = [(oyuncular[o]["boy_cm"], o) for o, g in gol.items() if g >= 30 and o in oyuncular and oyuncular[o].get("boy_cm")]
     K["uzunGolcu"] = [oyuncu_ozet(o, boy=b, gol=gol[o]) for b, o in sorted(boylu, reverse=True)[:8]]
     K["kisaGolcu"] = [oyuncu_ozet(o, boy=b, gol=gol[o]) for b, o in sorted(boylu)[:8]]
+
+    # 16) Transferler: kulübe geliş (bedel "Kulüp: Ablöse €60.00m"), oyuncu+kulüp+katılma tarihi başına bir kez
+    def bedel(metin):
+        m = re.search(r"€\s*([\d.,]+)\s*(bn|m|k|Th\.)?", metin or "")
+        if m:
+            return round(float(m.group(1).replace(",", "")) * {"bn": 1e9, "m": 1e6, "k": 1e3, "Th.": 1e3}.get(m.group(2), 1))
+        return 0 if "free transfer" in (metin or "") else None
+    ligOf = {(r["kulup_id"], r["sezon"]): r["lig_kod"] for r in lk}
+    transfer = {}
+    for r in sorted(os_, key=lambda r: r["sezon"]):
+        g = r.get("geldigi_kulup")
+        if not g or not r.get("katilma_tarihi"):
+            continue
+        k = (r["oyuncu_id"], r["kulup_id"], r["katilma_tarihi"])
+        if k not in transfer:
+            transfer[k] = {"o": r["oyuncu_id"], "kulup": r["kulup_id"], "sezon": r["sezon"], "nereden": g.split(": ", 1)[0], "bedel": bedel(g), "tarih": r["katilma_tarihi"], "lig": ligOf.get((r["kulup_id"], r["sezon"]))}
+    # Kulüpteki zirve değer (katıldıktan sonraki sezonlarda)
+    zirveKulup = defaultdict(int)
+    for r in os_:
+        if r["piyasa_degeri_eur"]:
+            zirveKulup[(r["oyuncu_id"], r["kulup_id"])] = max(zirveKulup[(r["oyuncu_id"], r["kulup_id"])], r["piyasa_degeri_eur"])
+    tl = list(transfer.values())
+    tsat = lambda t, **ek: oyuncu_ozet(t["o"], nereden=t["nereden"], nereye=kulupler.get(t["kulup"]), sezon=t["sezon"], bedel=t["bedel"], **ek)
+    ucretli = sorted([t for t in tl if t["bedel"]], key=lambda t: -t["bedel"])
+    K["transferRekor"] = [tsat(t) for t in ucretli[:15]]
+    K["ligTransfer"] = {lig: [tsat(t) for t in ucretli if t["lig"] == lig][:8] for lig in ligler}
+    # Yılların rekor transferi
+    yilRekor = {}
+    for t in ucretli:
+        if t["sezon"] not in yilRekor:
+            yilRekor[t["sezon"]] = tsat(t)
+    K["yilRekor"] = [yilRekor[s] for s in sorted(yilRekor, reverse=True)]
+    # En çok harcayan kulüpler (bilinen bedeller toplamı)
+    harca = Counter(); harcaSayi = Counter()
+    for t in ucretli:
+        harca[t["kulup"]] += t["bedel"]; harcaSayi[t["kulup"]] += 1
+    K["harcayan"] = [{"kulup": kulupler.get(k), "toplam": v, "sayi": harcaSayi[k]} for k, v in harca.most_common(12)]
+    ligHarca = defaultdict(Counter)
+    for t in ucretli:
+        if t["lig"]:
+            ligHarca[t["lig"]][t["kulup"]] += t["bedel"]
+    K["ligHarcayan"] = {lig: [{"kulup": kulupler.get(k), "toplam": v} for k, v in c.most_common(6)] for lig, c in ligHarca.items()}
+    # En kârlı alımlar: kulübe gelirken ödenen bedel (bedelsiz = 0) ile o kulüpteki zirve değeri arasındaki fark
+    karli = []
+    for t in tl:
+        if t["bedel"] is None:
+            continue
+        z = zirveKulup.get((t["o"], t["kulup"]), 0)
+        if z > t["bedel"]:
+            karli.append((z - t["bedel"], t, z))
+    karli.sort(key=lambda x: -x[0])
+    K["karliAlim"] = [tsat(t, zirve=z, artis=a) for a, t, z in karli[:15]]
+    K["bedelsizYildiz"] = [tsat(t, zirve=z) for a, t, z in sorted([x for x in karli if x[1]["bedel"] == 0], key=lambda x: -x[2])[:10]]
+
+    # 17) En değerli genç oyuncular (21 yaş ve altı, sezon değeri)
+    genDeger = sorted(((r["piyasa_degeri_eur"], r) for r in os_ if r["piyasa_degeri_eur"] and r["yas"] and r["yas"] <= 21), key=lambda x: -x[0])
+    gorulen = set(); gencDeger = []
+    for v, r in genDeger:
+        if r["oyuncu_id"] in gorulen:
+            continue
+        gorulen.add(r["oyuncu_id"])
+        gencDeger.append(oyuncu_ozet(r["oyuncu_id"], deger=v, yas=r["yas"], sezon=r["sezon"], kulup=kulupler.get(r["kulup_id"])))
+        if len(gencDeger) == 10:
+            break
+    K["gencDeger"] = gencDeger
 
     K["ligler"] = {k: {"ad": v["ad"], "ulke": v["ulke"]} for k, v in ligler.items()}
     K["uretildi"] = BUGUN.isoformat()

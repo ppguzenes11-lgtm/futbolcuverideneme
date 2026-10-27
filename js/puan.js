@@ -219,3 +219,72 @@ export function donemPuanla(sezonlar) {
   }
   return sonuc.sort((a, b) => b.puan - a.puan);
 }
+
+// ---------- Piyasa değeri ve lig gücü (8 lig birlikte) ----------
+// P: oyuncunun o sezonki piyasa değerinin, aynı sezon + mevki ailesi + yaş grubundaki oyuncular arasındaki
+//    yüzdelik dilimi (8 lig birlikte). Transfermarkt topluluğunun kalite kanaati; özellikle defansçılar için güçlü sinyal.
+//    Yaş grubu: gençlerin değeri potansiyelle şiştiği için gençler gençlerle karşılaştırılır.
+// Lig içi puan  = %80 mevcut puan + %20 P   (değer yoksa yalnızca mevcut puan)
+// Dünya puanı   = lig içi puan × lig gücü çarpanı (0,75 + 0,25 × lig gücü)
+// Lig gücü      = √(ligin ortalama kadro değeri / o sezonun en güçlü liginin ortalaması), 0–1
+export const DUNYA = { P_AGIRLIK: 0.2, CARPAN_TABAN: 0.75 };
+BILESEN_AD.P = 'Piyasa değeri';
+const yasGrubu = (y) => (y == null ? 'b' : y <= 21 ? 'a' : y <= 25 ? 'b' : y <= 29 ? 'c' : 'd');
+
+/**
+ * ligler: [{ lig, puanlilar }] — aynı sezonun lig lig puanla() çıktıları; satırlarda deger (€) ve yas olmalı.
+ * yedekGuc: değeri olmayan sezonlarda kullanılacak lig gücü ({ lig: 0–1 }), örn. en yakın sezonunki.
+ * Satırlara puanLig (eski puan), bilesen.P, puan (lig içi), carpan, puanDunya ekler. Dönüş: { ligGucu }
+ */
+export function dunyaKatmani(ligler, yedekGuc = null) {
+  // Değer verisi yeterli mi? (eski sezonlarda Transfermarkt'ta çok az değer var)
+  // Ligde düzenli oynayanların en az yarısının değeri yoksa o ligde değer kullanılmaz.
+  const yeterli = {};
+  for (const { lig, puanlilar } of ligler) {
+    const duzenli = puanlilar.filter((s) => s.sure >= 0.25);
+    yeterli[lig] = duzenli.length > 0 && duzenli.filter((s) => s.deger).length / duzenli.length >= 0.5;
+  }
+  // Lig gücü: kulüplerin oynayan oyuncularının değer toplamlarının ortalaması
+  const ligOrt = {};
+  for (const { lig, puanlilar } of ligler) {
+    if (!yeterli[lig]) continue;
+    const kulup = new Map();
+    for (const s of puanlilar) if (s.dakika > 0 && s.deger) kulup.set(s.kulup_id, (kulup.get(s.kulup_id) || 0) + s.deger);
+    if (kulup.size) ligOrt[lig] = [...kulup.values()].reduce((a, b) => a + b, 0) / kulup.size;
+  }
+  // Ligleri karşılaştırabilmek için çoğunun verisi olmalı; yoksa yedek (en yakın sezonun) lig gücü kullanılır
+  const karsilastirilabilir = Object.keys(ligOrt).length >= Math.ceil(ligler.length / 2);
+  const enGuclu = Math.max(0, ...Object.values(ligOrt));
+  const ligGucu = {};
+  for (const { lig } of ligler) {
+    ligGucu[lig] = karsilastirilabilir && ligOrt[lig] ? Math.sqrt(ligOrt[lig] / enGuclu) : (yedekGuc?.[lig] ?? 0.5);
+  }
+
+  // P: aynı aile + yaş grubu, takım dakikalarının en az %25'ini oynayanlar arasında yüzdelik
+  const kume = {};
+  for (const { lig, puanlilar } of ligler) {
+    if (!yeterli[lig]) continue;
+    for (const s of puanlilar) {
+      if (s.sure < 0.25 || !s.deger) continue;
+      (kume[`${s.aile}:${yasGrubu(s.yas)}`] ||= []).push(s.deger);
+    }
+  }
+  for (const { lig, puanlilar } of ligler) {
+    for (const s of puanlilar) {
+      s.puanLig = s.puan;
+      const k = kume[`${s.aile}:${yasGrubu(s.yas)}`];
+      s.bilesen.P = yeterli[lig] && s.deger && k?.length >= 10 ? yuzdelik(s.deger, k) : null;
+      if (s.bilesen.P != null) {
+        s.agirlik = { ...Object.fromEntries(Object.entries(s.agirlik).map(([b, w]) => [b, w * (1 - DUNYA.P_AGIRLIK)])), P: DUNYA.P_AGIRLIK };
+        s.katki = Object.fromEntries(Object.keys(s.agirlik).map((b) => [b, s.agirlik[b] * s.bilesen[b]]));
+        s.puan = Math.min(100, Object.values(s.katki).reduce((a, b) => a + b, 0) + s.sampiyonBonus);
+      }
+      s.lig = lig;
+      s.ligGucu = ligGucu[lig];
+      s.carpan = DUNYA.CARPAN_TABAN + (1 - DUNYA.CARPAN_TABAN) * ligGucu[lig];
+      s.puanDunya = s.puan * s.carpan;
+    }
+    puanlilar.sort((a, b) => b.puan - a.puan);
+  }
+  return { ligGucu, karsilastirilabilir };
+}

@@ -142,3 +142,12 @@ svg.trend .imlec-nokta { fill: var(--vurgu); stroke: var(--kart); stroke-width: 
 .tablo-kaydir table { font-size: 12px; }
 .tablo-kaydir th, .tablo-kaydir td { padding: 5px 8px; }
 @media (max-width: 680px) { .tablo-kaydir thead { display: table-header-group; } .tablo-kaydir table, .tablo-kaydir tbody { display: table; width: auto; } .tablo-kaydir tr { display: table-row; padding: 0; } .tablo-kaydir td { display: table-cell; } }
+
+.ara-baslik { margin: 14px 0 6px; font-size: 14px; }
+.deger-grafik { position: relative; margin-bottom: 6px; }
+svg.trend .deger-alan { fill: var(--vurgu); opacity: .12; }
+svg.trend .deger-etiket { fill: var(--yazi); font-weight: 700; }
+dialog { width: min(760px, calc(100vw - 32px)); }
+#detay-govde table { font-size: 13px; }
+#detay-govde th, #detay-govde td { padding: 8px 8px; }
+#detay-govde td small { font-size: 11px; }
