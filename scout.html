@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Scout</title>
+  <meta name="description" content="Premier Lig, Süper Lig ve Eredivisie maç ve oyuncu istatistikleri — SofaScore verisi">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="ust ust-scout">
+    <div class="ust-ic">
+      <div class="logo" aria-hidden="true">🔭</div>
+      <div>
+        <h1>Scout</h1>
+        <p class="alt">Premier Lig · Süper Lig · Eredivisie · 2016/17'den bugüne · SofaScore verisi</p>
+      </div>
+      <a class="ust-link" href="index.html">← Futbol Veritabanı</a>
+    </div>
+  </header>
+
+  <main class="kap">
+    <section class="arac">
+      <label class="alan"><span>Lig</span><select id="lig"></select></label>
+      <label class="alan"><span>Sezon</span><select id="sezon"></select></label>
+      <label class="alan" id="hafta-alan"><span>Hafta</span><select id="hafta"></select></label>
+      <label class="alan" id="stat-alan" style="display:none"><span>İstatistik</span><select id="stat"></select></label>
+      <label class="alan" id="mevki-alan" style="display:none"><span>Mevki</span><select id="mevki">
+        <option value="">Tümü</option><option value="G">Kaleci</option><option value="D">Defans</option><option value="M">Orta saha</option><option value="F">Forvet</option>
+      </select></label>
+      <label class="alan" id="dk-alan" style="display:none"><span>En az dakika</span><select id="dk">
+        <option value="0">Hepsi</option><option value="450">450</option><option value="900" selected>900</option><option value="1800">1800</option>
+      </select></label>
+      <label class="alan genis" id="ara-alan" style="display:none"><span>Oyuncu ara</span><input id="ara" type="search" placeholder="Örn. Kerem, Saka…" autocomplete="off"></label>
+    </section>
+
+    <nav class="sekmeler" role="tablist">
+      <button class="sekme aktif" data-gorunum="maclar" role="tab">Maçlar</button>
+      <button class="sekme" data-gorunum="siralama" role="tab">Sıralama</button>
+      <button class="sekme" data-gorunum="oyuncular" role="tab">Oyuncular</button>
+      <button class="sekme" data-gorunum="durum" role="tab">Çekim durumu</button>
+    </nav>
+
+    <section class="ozet" id="ozet"></section>
+    <section id="icerik"><div class="bilgi">Yükleniyor…</div></section>
+  </main>
+
+  <dialog id="detay">
+    <div class="detay-bas">
+      <h2 id="detay-ad"></h2>
+      <button class="kapat" id="detay-kapat" aria-label="Kapat">×</button>
+    </div>
+    <div id="detay-govde"></div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script type="module" src="js/scout.js"></script>
+</body>
+</html>
