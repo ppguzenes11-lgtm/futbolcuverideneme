@@ -105,8 +105,8 @@ function seciciler() {
   for (const id of ['#stat-alan', '#mevki-alan', '#dk-alan']) $(id).style.display = g === 'siralama' ? '' : 'none';
   $('#ara-alan').style.display = g === 'oyuncular' ? '' : 'none';
   for (const id of ['#ev-alan', '#dep-alan', '#hakem-alan']) $(id).style.display = g === 'tahmin' ? '' : 'none';
-  $('#lig').parentElement.style.display = g === 'oyuncular' || g === 'durum' || g === 'analiz' ? 'none' : '';
-  $('#sezon').parentElement.style.display = g === 'oyuncular' || g === 'durum' || g === 'tahmin' || g === 'analiz' ? 'none' : '';
+  $('#lig').parentElement.style.display = g === 'oyuncular' || g === 'durum' || g === 'analiz' || g === 'kupon' ? 'none' : '';
+  $('#sezon').parentElement.style.display = g === 'oyuncular' || g === 'durum' || g === 'tahmin' || g === 'analiz' || g === 'kupon' ? 'none' : '';
 }
 
 // ---------- Maçlar ----------
@@ -421,6 +421,7 @@ async function goster() {
   if (durum.gorunum === 'oyuncular') return oyuncularGoster();
   if (durum.gorunum === 'tahmin') return tahminGoster();
   if (durum.gorunum === 'analiz') return analizGoster();
+  if (durum.gorunum === 'kupon') return kuponGoster();
   yenile = setInterval(() => { if (durum.gorunum === 'durum' && !document.hidden) { surum++; durumGoster(); } }, 60000);
   return durumGoster();
 }
@@ -707,4 +708,187 @@ async function analizGoster() {
     e.preventDefault();
     document.getElementById(l.dataset.git)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
+}
+
+// ---------- Kupon simülatörü (geçmiş maçlarda) ----------
+// Olasılıklar maç oynanmadan önceki bilgilerle üretildi (scout/analiz/kupon_veri.py); sonuçlar sonradan açılır.
+let kuponVeri = null;
+const kuponAyar = { para: 100, tip: 'sayi', sayi: 3, hedef: 5, strateji: 'favori', pazar: '1x2', oran: 1 };
+let sonKupon = null;
+const tl = (x) => `${Number(x).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL`;
+const SONUC_AD = ['Ev sahibi kazanır (1)', 'Beraberlik (X)', 'Deplasman kazanır (2)'];
+
+function haftaAnahtari(t) {
+  const d = new Date(t + 'T12:00:00Z');
+  const pzt = new Date(d); pzt.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return pzt.toISOString().slice(0, 10);
+}
+
+/** Bir maçın oynanabilir seçimleri: {ad, p (model), o (oran), tuttu} */
+function secenekler(m, pazar, oranTur) {
+  const s = [];
+  const [ge, gd] = m.g;
+  const sonuc = ge > gd ? 0 : ge === gd ? 1 : 2;
+  m.p.forEach((p, i) => s.push({ ad: SONUC_AD[i], kisa: ['1', 'X', '2'][i], p, o: m.o[oranTur][i], tuttu: sonuc === i }));
+  if (pazar === 'karisik') {
+    if (m.kg) {
+      const [p, ...o] = m.kg;
+      s.push({ ad: 'Karşılıklı gol var', kisa: 'KG Var', p, o: o[oranTur][0], tuttu: ge > 0 && gd > 0 });
+      s.push({ ad: 'Karşılıklı gol yok', kisa: 'KG Yok', p: 1 - p, o: o[oranTur][1], tuttu: !(ge > 0 && gd > 0) });
+    }
+    if (m.u) {
+      const [p, ...o] = m.u;
+      s.push({ ad: '2,5 gol üstü', kisa: '2,5 Üst', p, o: o[oranTur][0], tuttu: ge + gd > 2.5 });
+      s.push({ ad: '2,5 gol altı', kisa: '2,5 Alt', p: 1 - p, o: o[oranTur][1], tuttu: ge + gd < 2.5 });
+    }
+  }
+  return s.filter((x) => x.o > 1 && x.p > 0);
+}
+
+/** Ayarlara göre rastgele bir haftadan kupon kurar. */
+function kuponKur(ayar, haftalar, rnd = Math.random) {
+  const uygun = haftalar.filter((h) => h.maclar.length >= (ayar.tip === 'sayi' ? ayar.sayi : 2) && (ayar.pazar !== 'karisik' || h.maclar.some((m) => m.kg)));
+  if (!uygun.length) return null;
+  const hafta = uygun[Math.floor(rnd() * uygun.length)];
+  const adaylar = hafta.maclar.map((m) => {
+    const ss = secenekler(m, ayar.pazar, ayar.oran);
+    let sec;
+    if (ayar.strateji === 'favori') sec = ss.reduce((a, b) => (b.p > a.p ? b : a));
+    else if (ayar.strateji === 'deger') sec = ss.reduce((a, b) => (b.p * b.o > a.p * a.o ? b : a));
+    else sec = ss[Math.floor(rnd() * ss.length)];
+    return { m, sec, puan: ayar.strateji === 'favori' ? sec.p : ayar.strateji === 'deger' ? sec.p * sec.o : rnd() };
+  }).sort((a, b) => b.puan - a.puan);
+  const secilen = [];
+  let oran = 1;
+  for (const a of adaylar) {
+    if (ayar.tip === 'sayi' ? secilen.length >= ayar.sayi : oran >= ayar.hedef) break;
+    secilen.push(a);
+    oran *= a.sec.o;
+  }
+  const sansi = secilen.reduce((x, a) => x * a.sec.p, 1);
+  const tuttu = secilen.every((a) => a.sec.tuttu);
+  return { hafta: hafta.anahtar, secilen, oran, sansi, tuttu, kazanc: tuttu ? ayar.para * oran : 0 };
+}
+
+function kuponHaftalari() {
+  const h = new Map();
+  for (const m of kuponVeri.maclar) {
+    const k = haftaAnahtari(m.t);
+    if (!h.has(k)) h.set(k, { anahtar: k, maclar: [] });
+    h.get(k).maclar.push(m);
+  }
+  return [...h.values()];
+}
+
+function kuponCiz(k, acik) {
+  if (!k) return '<div class="bilgi">Bu ayarlarla kupon kurulamadı. Maç sayısını ya da hedef oranı düşürün.</div>';
+  const satir = (a, i) => {
+    const m = a.m;
+    const acildi = acik > i;
+    return `<div class="k-satir ${acildi ? (a.sec.tuttu ? 'tuttu' : 'yatti') : ''}" style="--gecikme:${i * 0.35}s">
+      <div class="k-mac"><b>${esc(m.e)} – ${esc(m.d)}</b><small>${esc(tarihAd(m.t))}</small></div>
+      <div class="k-sec"><span class="etiket">${esc(a.sec.kisa)}</span><small>${esc(a.sec.ad)} · model %${sayi(100 * a.sec.p)}</small></div>
+      <div class="k-oran">${sayi(a.sec.o, 2)}</div>
+      <div class="k-sonuc">${acildi ? `<b>${m.g[0]}–${m.g[1]}</b> ${a.sec.tuttu ? '✅' : '❌'}` : '<span class="soluk">?</span>'}</div>
+    </div>`;
+  };
+  const bitti = acik >= k.secilen.length;
+  return `<div class="kesfet-kart genis k-kupon">
+    <div class="k-ust"><b>${esc(trHafta(k.hafta))} haftasından ${k.secilen.length} maçlık kupon</b><span class="soluk">${kuponAyar.oran ? 'maç saatindeki oranlar' : 'açılış oranları'}</span></div>
+    ${k.secilen.map(satir).join('')}
+    <div class="k-alt">
+      <div><small class="soluk">Toplam oran</small><b>${sayi(k.oran, 2)}</b></div>
+      <div><small class="soluk">Modelin tutma tahmini</small><b>%${sayi(100 * k.sansi, 1)}</b></div>
+      <div><small class="soluk">Bahis</small><b>${tl(kuponAyar.para)}</b></div>
+      <div><small class="soluk">Olası kazanç</small><b>${tl(kuponAyar.para * k.oran)}</b></div>
+    </div>
+    ${bitti ? `<div class="k-karar ${k.tuttu ? 'tuttu' : 'yatti'}">${k.tuttu ? `🎉 Kupon tuttu! ${tl(k.kazanc)} kazandın (net +${tl(k.kazanc - kuponAyar.para)})` : `Kupon yattı. ${tl(kuponAyar.para)} kaybettin.`}</div>`
+      : `<button class="k-buton" id="k-goster">Sonucu göster</button>`}
+  </div>`;
+}
+const trHafta = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+function topluDene(ayar, haftalar, kac = 1000) {
+  const ozet = (str) => {
+    let yat = 0, don = 0, tut = 0, sans = 0, n = 0, oranT = 0;
+    for (let i = 0; i < kac; i++) {
+      const k = kuponKur({ ...ayar, strateji: str }, haftalar);
+      if (!k) continue;
+      n++; yat += ayar.para; don += k.kazanc; tut += k.tuttu; sans += k.sansi; oranT += k.oran;
+    }
+    return { n, yat, don, tut, sans, oran: oranT / (n || 1) };
+  };
+  return { model: ozet(ayar.strateji === 'rastgele' ? 'favori' : ayar.strateji), rastgele: ozet('rastgele') };
+}
+
+function topluCiz(r, ayar) {
+  const kart = (ad, x) => {
+    const net = x.don - x.yat;
+    return `<div class="kesfet-kart"><h3>${esc(ad)}</h3>
+      <div class="t-satir"><span>Tutan kupon</span><b>%${sayi(100 * x.tut / x.n, 1)}</b><span></span></div>
+      <div class="t-satir"><span>Modelin beklediği</span><b>%${sayi(100 * x.sans / x.n, 1)}</b><span></span></div>
+      <div class="t-satir"><span>Ortalama oran</span><b>${sayi(x.oran, 2)}</b><span></span></div>
+      <p class="not">${sayi(x.n)} kupon × ${tl(ayar.para)} = ${tl(x.yat)} yatırıldı, ${tl(x.don)} geri döndü.</p>
+      <div class="k-net ${net >= 0 ? 'tuttu' : 'yatti'}">${net >= 0 ? '+' : ''}${tl(net)} <small>(her 100 TL için ${net >= 0 ? '+' : ''}${sayi(100 * net / x.yat, 1)} TL)</small></div></div>`;
+  };
+  const stratAd = { favori: 'Modelin favorileri', deger: 'Modelin değerli bulduğu seçimler', rastgele: 'Modelin favorileri' }[ayar.strateji];
+  return `<h2 class="kesfet-baslik">1.000 kupon sonucu</h2>
+    <div class="iki-sutun">${kart(stratAd, r.model)}${kart('Rastgele seçimler (kıyas)', r.rastgele)}</div>
+    <p class="not">Aynı ayarlarla geçmişten rastgele haftalar seçildi. Uzun vadede kazanıp kaybettiren şey tutma oranı değil, oranların modelin bildiğinden ne kadar "cömert" olduğu.
+      Bahis şirketleri her oranın içine kendi payını koyduğu için rastgele seçimler uzun vadede hep kaybettirir; modelin işi bu kaybı küçültmek, mümkünse kâra çevirmek.
+      Yüksek oranlı kuponlarda birkaç büyük kazanç bütün sonucu değiştirir; tekrar denerseniz sonuç belirgin şekilde değişebilir.</p>`;
+}
+
+async function kuponGoster() {
+  const v = surum;
+  yukleniyor();
+  $('#ozet').innerHTML = '';
+  try {
+    kuponVeri ||= await fetch('veri/scout_kupon_gecmis.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  } catch (e) { return guncel(v) && bos(`Kupon verisi yüklenemedi: ${esc(e.message)}`); }
+  if (!guncel(v)) return;
+  const haftalar = kuponHaftalari();
+  const a = kuponAyar;
+  $('#icerik').innerHTML = `
+    <div class="kesfet-kart genis">
+      <h2 class="kesfet-baslik" style="margin-top:0">🎲 Kupon simülatörü</h2>
+      <p class="not">${esc(kuponVeri.lig)}'in ${sayi(kuponVeri.maclar.length)} geçmiş maçında oynanır. Model her maçı <b>sonucu bilmeden</b> tahmin etti;
+        kuponu kurunca sonuçlar açılır. Gerçek para değildir, modelin gücünü görmek içindir.</p>
+      <div class="arac k-ayar">
+        <label class="alan"><span>Bahis (TL)</span><input id="k-para" type="number" min="1" step="10" value="${a.para}"></label>
+        <label class="alan"><span>Kupon</span><select id="k-tip"><option value="sayi">Maç sayısına göre</option><option value="hedef">Hedef orana göre</option></select></label>
+        <label class="alan" id="k-sayi-alan"><span>Maç sayısı</span><select id="k-sayi">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<option>${n}</option>`).join('')}</select></label>
+        <label class="alan" id="k-hedef-alan"><span>Hedef oran</span><select id="k-hedef">${[2, 3, 5, 10, 20, 50, 100].map((n) => `<option>${n}</option>`).join('')}</select></label>
+        <label class="alan"><span>Strateji</span><select id="k-strateji"><option value="favori">Modelin favorileri</option><option value="deger">Değerli seçimler (model × oran)</option><option value="rastgele">Rastgele (kıyas için)</option></select></label>
+        <label class="alan"><span>Pazar</span><select id="k-pazar"><option value="1x2">Maç sonucu</option><option value="karisik">Maç sonucu + KG + 2,5 üst/alt</option></select></label>
+        <label class="alan"><span>Oranlar</span><select id="k-oran"><option value="1">Maç saatindeki</option><option value="0">Açılış (günler önce)</option></select></label>
+      </div>
+      <div class="k-butonlar"><button class="k-buton" id="k-olustur">🎲 Kupon oluştur</button><button class="k-buton ikincil" id="k-toplu">1.000 kez dene</button></div>
+    </div>
+    <div id="k-alan"></div>`;
+  const ayarOku = () => {
+    a.para = Math.max(1, Number($('#k-para').value) || 100);
+    a.tip = $('#k-tip').value; a.sayi = +$('#k-sayi').value; a.hedef = +$('#k-hedef').value;
+    a.strateji = $('#k-strateji').value; a.pazar = $('#k-pazar').value; a.oran = +$('#k-oran').value;
+    $('#k-sayi-alan').style.display = a.tip === 'sayi' ? '' : 'none';
+    $('#k-hedef-alan').style.display = a.tip === 'hedef' ? '' : 'none';
+  };
+  $('#k-tip').value = a.tip; $('#k-sayi').value = a.sayi; $('#k-hedef').value = a.hedef;
+  $('#k-strateji').value = a.strateji; $('#k-pazar').value = a.pazar; $('#k-oran').value = a.oran;
+  ayarOku();
+  $('#icerik').querySelectorAll('.k-ayar select, .k-ayar input').forEach((x) => x.addEventListener('change', ayarOku));
+  const goster = (acik) => {
+    $('#k-alan').innerHTML = kuponCiz(sonKupon, acik);
+    $('#k-goster')?.addEventListener('click', () => {
+      let i = 0;
+      const ac = () => { i++; $('#k-alan').innerHTML = kuponCiz(sonKupon, i); if (i < sonKupon.secilen.length) setTimeout(ac, 450); };
+      ac();
+    });
+  };
+  $('#k-olustur').addEventListener('click', () => { ayarOku(); sonKupon = kuponKur(a, haftalar); goster(0); });
+  $('#k-toplu').addEventListener('click', () => {
+    ayarOku();
+    $('#k-alan').innerHTML = '<div class="bilgi">1.000 kupon oynanıyor…</div>';
+    setTimeout(() => { $('#k-alan').innerHTML = topluCiz(topluDene(a, haftalar), a); }, 30);
+  });
 }

@@ -59,3 +59,11 @@ python scout/analiz/model_egit.py /tmp/pl/oz17.json 17 veri/scout_model_katsayi.
 ```
 Katsayısı olmayan ligde mevcut model kullanılır. İlk 11'li sürüm, maç öncesi kadroları otomatik çeken bir
 sistem kurulunca eklenecek.
+
+## Kupon simülatörü (🎲 Kupon sekmesi)
+Geçmiş maçlarda, modelin maçı görmeden ürettiği olasılıklarla kupon kurar ve sonuçları açar; "1.000 kez dene" aynı
+ayarlarla toplu sonuç ve rastgele seçimlerle kıyas verir. Veri: `veri/scout_kupon_gecmis.json`
+```
+node scout/analiz/pazar_cikar.mjs /tmp/pl /tmp/pl/pazar17.json
+python scout/analiz/kupon_veri.py /tmp/pl/pazar17.json /tmp/pl/takimlar.json /tmp/pl/maclar.json veri/scout_kupon_gecmis.json
+```
