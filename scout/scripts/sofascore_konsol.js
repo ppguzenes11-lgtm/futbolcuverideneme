@@ -233,10 +233,45 @@
     return [...maclar.values()].sort((a, b) => a.startTimestamp - b.startTimestamp);
   }
 
+  // ---------- Fikstür (yaklaşan maçlar) ----------
+  const guncelSezon = async (lig) => (await al(`unique-tournament/${lig.id}/seasons`)).seasons
+    .filter((s) => /^\d\d\/\d\d$/.test(s.year)).sort((a, b) => sezonYili(b.year) - sezonYili(a.year))[0];
+  async function fiksturGuncelle() {
+    try {
+      let n = 0;
+      for (const lig of LIGLER) {
+        const sz = await guncelSezon(lig);
+        const r = await al(`unique-tournament/${lig.id}/season/${sz.id}/events/next/0`, { yoksaNull: true });
+        const satir = [];
+        for (const e of (r?.events ?? []).filter((x) => x.status?.type !== 'finished')) {
+          // Hakem genelde maçtan 1-2 gün önce açıklanır; yalnızca 3 gün içindeki maçlar için bakılır
+          let hakem = null;
+          if (e.startTimestamp * 1000 - Date.now() < 3 * 86400000) {
+            const ref = (await al(`event/${e.id}`, { yoksaNull: true }))?.event?.referee;
+            if (ref) hakem = { id: ref.id, ad: ref.name };
+          }
+          satir.push({
+            id: e.id, lig_id: lig.id, sezon_id: sz.id, sezon: sz.year, hafta: e.roundInfo?.round ?? null, tarih: tarih(e.startTimestamp),
+            ev_id: e.homeTeam.id, ev_ad: e.homeTeam.name, dep_id: e.awayTeam.id, dep_ad: e.awayTeam.name,
+            durum: e.status?.type ?? null, hakem, guncellendi: new Date().toISOString(),
+          });
+        }
+        await sbYaz('ss_fikstur', satir, { cakisma: 'id' });
+        n += satir.length;
+      }
+      console.log(`%cFikstür güncellendi: ${n} yaklaşan maç`, 'color:#2563eb');
+    } catch (e) {
+      if (e instanceof Durdur) throw e;
+      console.warn('Fikstür güncellenemedi (scout/supabase/fikstur.sql çalıştırıldı mı?):', e.message);
+    }
+  }
+
   // ---------- Ana döngü ----------
   let toplam = 0;
   const baslangic = Date.now();
+  let sonFikstur = Date.now();
   try {
+    await fiksturGuncelle();
     for (const lig of LIGLER) {
       const sezonlar = (await al(`unique-tournament/${lig.id}/seasons`)).seasons
         .filter((s) => /^\d\d\/\d\d$/.test(s.year) && sezonYili(s.year) >= ILK_SEZON)
@@ -246,6 +281,7 @@
         const kalan = maclar.filter((m) => !bitenMaclar.has(m.id));
         console.log(`%c${lig.ad} ${sezon.year}: ${maclar.length} bitmiş maç, ${kalan.length} çekilecek`, 'font-weight:bold;color:#2563eb');
         for (const ev of kalan) {
+          if (Date.now() - sonFikstur > 6 * 3600000) { await fiksturGuncelle(); sonFikstur = Date.now(); }
           const s = await macCek(lig, sezon, ev);
           toplam++;
           const dk = Math.round((Date.now() - baslangic) / 60000);

@@ -217,3 +217,8 @@ td span.oldu { font-weight: 800; text-decoration: underline; }
 @media (max-width: 680px) { .t-yuzde { font-size: 22px; } .t-ust b { font-size: 13px; } .t-satir { grid-template-columns: 1fr 44px 60px; } }
 @media (max-width: 680px) { .tablo-kaydir th, .tablo-kaydir td { white-space: nowrap; } .tablo-kaydir td[data-k]::before { content: none; } }
 @media (max-width: 680px) { .tablo-kaydir tbody { display: table-row-group; } .tablo-kaydir th { display: table-cell; } }
+.t-fikstur { margin-bottom: 18px; }
+.mac.secili { border-color: var(--vurgu); box-shadow: 0 0 0 1px var(--vurgu); }
+.t-mini { font-size: 14px; display: flex; justify-content: center; gap: 3px; align-items: baseline; }
+.t-mini .ev { color: #2563eb; } .t-mini .ber { color: var(--soluk); } .t-mini .dep { color: #f97316; }
+.t-mini small { display: inline; }

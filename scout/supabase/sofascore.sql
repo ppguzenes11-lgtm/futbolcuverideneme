@@ -88,7 +88,7 @@ end $$;
 
 -- Çekim bitince yazmayı kapatmak için:
 -- do $$ declare t text; begin
---   foreach t in array array['ss_takimlar','ss_oyuncular','ss_anahtarlar','ss_maclar','ss_oyuncu_mac'] loop
+--   foreach t in array array['ss_takimlar','ss_oyuncular','ss_anahtarlar','ss_maclar','ss_oyuncu_mac','ss_fikstur'] loop
 --     execute format('drop policy if exists "yazma" on %I', t);
 --     execute format('drop policy if exists "guncelleme" on %I', t);
 --   end loop; end $$;

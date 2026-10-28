@@ -506,12 +506,22 @@ async function tahminGoster() {
   if (maclar.length < 60) return bos(`${ligAd(durum.lig)} için henüz yeterli maç yok (${maclar.length}). Tahmin için en az 60 maç gerekiyor; veri çekimi bu lige gelince burada görünecek.`);
   const simdi = Date.now();
   const son = new Date(maclar[maclar.length - 1].tarih).getTime();
-  const guncelTakim = [...new Set(maclar.filter((m) => son - new Date(m.tarih) < 200 * 86400000).flatMap((m) => [m.ev_id, m.dep_id]))]
+  // Yaklaşan maçlar (fikstür tablosu yoksa liste boş kalır)
+  const oynanan = new Set(maclar.map((m) => m.id));
+  const { data: fikRaw } = await db().from('ss_fikstur').select('*').eq('lig_id', durum.lig)
+    .gte('tarih', new Date(simdi - 3 * 3600000).toISOString()).order('tarih').limit(30);
+  if (!guncel(v)) return;
+  const fikstur = (fikRaw || []).filter((f) => !oynanan.has(f.id) && f.durum !== 'canceled');
+  for (const f of fikstur) for (const [id, ad] of [[f.ev_id, f.ev_ad], [f.dep_id, f.dep_ad]]) if (!takimlar.has(id)) takimlar.set(id, { id, ad });
+  if (durum.ev == null && fikstur[0]) Object.assign(durum, { ev: fikstur[0].ev_id, dep: fikstur[0].dep_id, hakem: fikstur[0].hakem?.id ?? '' });
+  const guncelTakim = [...new Set([...maclar.filter((m) => son - new Date(m.tarih) < 200 * 86400000).flatMap((m) => [m.ev_id, m.dep_id]),
+    ...fikstur.flatMap((f) => [f.ev_id, f.dep_id])])]
     .sort((a, b) => takim(a).localeCompare(takim(b), 'tr'));
   if (!guncelTakim.includes(durum.ev)) durum.ev = guncelTakim[0];
   if (!guncelTakim.includes(durum.dep) || durum.dep === durum.ev) durum.dep = guncelTakim.find((t) => t !== durum.ev);
   const hakemler = [...new Map(maclar.filter((m) => m.hakem && son - new Date(m.tarih) < 400 * 86400000).map((m) => [m.hakem.id, m.hakem.ad])).entries()]
     .sort((a, b) => a[1].localeCompare(b[1], 'tr'));
+  for (const f of fikstur) if (f.hakem && !hakemler.some(([id]) => id === f.hakem.id)) hakemler.push([f.hakem.id, f.hakem.ad]);
   const sec = (id, liste, deger) => { $(id).innerHTML = liste; $(id).value = deger ?? ''; };
   const takimSec = guncelTakim.map((t) => `<option value="${t}">${esc(takim(t))}</option>`).join('');
   sec('#ev', takimSec, durum.ev);
@@ -520,12 +530,28 @@ async function tahminGoster() {
 
   const model = modelKur(maclar, simdi);
   const t = model.tahmin(durum.ev, durum.dep, { hakemId: durum.hakem || null });
+  const fikHtml = fikstur.length ? `<h2 class="kesfet-baslik">Yaklaşan maçlar</h2><div class="mac-liste t-fikstur">${fikstur.map((f) => {
+    const p = model.tahmin(f.ev_id, f.dep_id, { hakemId: f.hakem?.id });
+    const secili = f.ev_id === durum.ev && f.dep_id === durum.dep;
+    return `<button class="mac ${secili ? 'secili' : ''}" data-fik="${f.id}">
+      <span class="mac-zaman">${esc(tarihAd(f.tarih))}<small>${esc(saatAd(f.tarih))}${f.durum === 'postponed' ? ' · ertelendi' : ''}</small></span>
+      <span class="mac-takim ev">${esc(f.ev_ad)}</span>
+      <span class="mac-skor t-mini"><span class="ev">${sayi(100 * p.p1)}</span>·<span class="ber">${sayi(100 * p.px)}</span>·<span class="dep">${sayi(100 * p.p2)}</span><small>%</small></span>
+      <span class="mac-takim dep">${esc(f.dep_ad)}</span></button>`;
+  }).join('')}</div>` : '<p class="not">Yaklaşan maç listesi için çekim kodunun yeni sürümü ve <code>fikstur.sql</code> gerekiyor. Şimdilik takımları yukarıdan seçebilirsiniz.</p>';
   $('#icerik').innerHTML = `
+    <h2 class="kesfet-baslik">Seçili maç</h2>
     <div class="kesfet-kart genis t-ana">${durum.ev === durum.dep ? '<p class="not">İki farklı takım seçin.</p>' : tahminKart(t, durum.ev, durum.dep, model)}</div>
     <p class="not">Model ${sayi(model.macSayisi)} maçtan öğrendi (yakın tarihli maçlar daha ağır basar). Ev sahibi avantajı ×${sayi(model.gol.ev, 2)}.
       Bu yüzdeler tahmindir, kesinlik değildir.</p>
+    ${fikHtml}
     <h2 class="kesfet-baslik">Karne <small class="soluk">— geçmiş maçlarda ne kadar isabetliydik?</small></h2>
     <div id="karne"><div class="bilgi">Hesaplanıyor…</div></div>`;
+  $('#icerik').querySelectorAll('[data-fik]').forEach((b) => b.addEventListener('click', () => {
+    const f = fikstur.find((x) => x.id === +b.dataset.fik);
+    Object.assign(durum, { ev: f.ev_id, dep: f.dep_id, hakem: f.hakem?.id ?? '' });
+    goster().then(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  }));
   setTimeout(() => karneGoster(v, maclar), 30);
 }
 
