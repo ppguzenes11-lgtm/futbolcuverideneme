@@ -1,4 +1,5 @@
 import { db } from './db.js';
+import { modelKur, geriTest, karne, oranOlasilik } from './tahmin.js';
 
 // Scout — SofaScore verisi (ss_ tabloları): maçlar, oyuncu sıralamaları, oyuncu profili, çekim durumu.
 const $ = (s) => document.querySelector(s);
@@ -16,7 +17,7 @@ const SEZONLAR = Array.from({ length: BU - 16 + 1 }, (_, i) => `${iki(BU - i)}/$
 const MEVKI = { G: 'Kaleci', D: 'Defans', M: 'Orta saha', F: 'Forvet' };
 const ligAd = (id) => LIGLER.find((l) => l.id === id)?.ad ?? id;
 
-const durum = { gorunum: 'maclar', lig: 17, sezon: SEZONLAR[0], hafta: null, stat: 'puan', mevki: '', dk: 900, ara: '' };
+const durum = { gorunum: 'maclar', ev: null, dep: null, hakem: '', lig: 17, sezon: SEZONLAR[0], hafta: null, stat: 'puan', mevki: '', dk: 900, ara: '' };
 let takimlar = new Map(), anahtar = new Map();
 const takim = (id) => takimlar.get(id)?.ad ?? '?';
 
@@ -103,7 +104,9 @@ function seciciler() {
   $('#hafta-alan').style.display = g === 'maclar' ? '' : 'none';
   for (const id of ['#stat-alan', '#mevki-alan', '#dk-alan']) $(id).style.display = g === 'siralama' ? '' : 'none';
   $('#ara-alan').style.display = g === 'oyuncular' ? '' : 'none';
-  $('#lig').parentElement.style.display = $('#sezon').parentElement.style.display = g === 'oyuncular' || g === 'durum' ? 'none' : '';
+  for (const id of ['#ev-alan', '#dep-alan', '#hakem-alan']) $(id).style.display = g === 'tahmin' ? '' : 'none';
+  $('#lig').parentElement.style.display = g === 'oyuncular' || g === 'durum' ? 'none' : '';
+  $('#sezon').parentElement.style.display = g === 'oyuncular' || g === 'durum' || g === 'tahmin' ? 'none' : '';
 }
 
 // ---------- Maçlar ----------
@@ -186,7 +189,9 @@ async function macDetay(id) {
   if (error || e2) { $('#detay-govde').innerHTML = `<div class="bilgi">${esc((error || e2).message)}</div>`; return; }
   const adlar = await oyuncuAdlari([...oy.map((r) => r.oyuncu_id), ...(m.olaylar || []).flatMap((o) => [o.p, o.a])]);
   const oAd = (pid) => adlar.get(pid)?.kisa_ad || adlar.get(pid)?.ad || (m.eksikler || []).find((x) => x.id === pid)?.ad || '?';
-  $('#detay-ad').textContent = `${takim(m.ev_id)} ${m.ev_gol ?? ''}–${m.dep_gol ?? ''} ${takim(m.dep_id)}`;
+  let tahminHtml = '';
+  const baslik = `${takim(m.ev_id)} ${m.ev_gol ?? ''}–${m.dep_gol ?? ''} ${takim(m.dep_id)}`;
+  $('#detay-ad').textContent = baslik;
 
   const etiket = [
     `${ligAd(m.lig_id)} · ${m.sezon}${m.hafta ? ` · ${m.hafta}. hafta` : ''}`,
@@ -242,6 +247,7 @@ async function macDetay(id) {
       <h3 class="ara-baslik">Takım istatistikleri</h3>
       <div class="segment" id="periyot">${[['ALL', 'Maç'], ['1ST', '1. yarı'], ['2ND', '2. yarı']].map(([k, a]) => `<button data-p="${k}" class="${k === macPeriyot ? 'aktif' : ''}">${a}</button>`).join('')}</div>
       <div class="ist-kutu">${istHtml()}</div>
+      <div id="mac-tahmin">${tahminHtml}</div>
       ${olaylar ? `<h3 class="ara-baslik">Maç olayları</h3><ul class="olaylar">${olaylar}</ul>` : ''}
       <h3 class="ara-baslik">${esc(takim(m.ev_id))} kadrosu</h3><div class="tablo-kaydir">${kadro(true)}</div>
       <h3 class="ara-baslik">${esc(takim(m.dep_id))} kadrosu</h3><div class="tablo-kaydir">${kadro(false)}</div>
@@ -253,6 +259,12 @@ async function macDetay(id) {
     $('#detay-govde').querySelectorAll('[data-oyuncu]').forEach((t) => t.addEventListener('click', () => oyuncuDetay(+t.dataset.oyuncu)));
   };
   ciz();
+  macOncesiTahmin(m).then((r) => {
+    const kutu = document.getElementById('mac-tahmin');
+    if (!r || !kutu || $('#detay-ad').textContent !== baslik) return;
+    kutu.innerHTML = tahminHtml = `<details class="tablo-gor t-detay"><summary><b>Maç öncesi tahminimiz:</b> ${yuz(r.t.p1)} · ${yuz(r.t.px)} · ${yuz(r.t.p2)}</summary>
+      <div class="t-ana">${tahminKart(r.t, m.ev_id, m.dep_id, r.model, oranOlasilik(m.oranlar, 'Full time'))}</div></details>`;
+  }).catch(() => {});
 }
 
 // ---------- Sıralama ----------
@@ -407,6 +419,7 @@ async function goster() {
   if (durum.gorunum === 'maclar') return maclarGoster();
   if (durum.gorunum === 'siralama') return siralamaGoster();
   if (durum.gorunum === 'oyuncular') return oyuncularGoster();
+  if (durum.gorunum === 'tahmin') return tahminGoster();
   yenile = setInterval(() => { if (durum.gorunum === 'durum' && !document.hidden) { surum++; durumGoster(); } }, 60000);
   return durumGoster();
 }
@@ -419,6 +432,10 @@ $('#stat').addEventListener('change', (e) => { durum.stat = e.target.value; gost
 $('#mevki').addEventListener('change', (e) => { durum.mevki = e.target.value; goster(); });
 $('#dk').addEventListener('change', (e) => { durum.dk = +e.target.value; goster(); });
 $('#ara').addEventListener('input', (e) => { durum.ara = e.target.value; clearTimeout(araZamanlayici); araZamanlayici = setTimeout(goster, 300); });
+$('#ev').addEventListener('change', (e) => { durum.ev = +e.target.value; goster(); });
+$('#dep').addEventListener('change', (e) => { durum.dep = +e.target.value; goster(); });
+$('#hakem').addEventListener('change', (e) => { durum.hakem = e.target.value ? +e.target.value : ''; goster(); });
+$('#lig').addEventListener('change', () => { durum.ev = durum.dep = null; durum.hakem = ''; });
 $('#detay-kapat').addEventListener('click', () => $('#detay').close());
 $('#detay').addEventListener('click', (e) => { if (e.target === $('#detay')) $('#detay').close(); });
 
@@ -433,3 +450,142 @@ $('#detay').addEventListener('click', (e) => { if (e.target === $('#detay')) $('
   } catch (e) { return hata(e); }
   goster();
 })();
+
+// ---------- Tahmin ----------
+// Lig verisi bir kez yüklenir (hafif sütunlar), model tarayıcıda kurulur.
+const ligVeri = new Map();
+const VERI_SUTUN = 'id,sezon,tarih,ev_id,dep_id,ev_gol,dep_gol,hakem,xg:istatistik->ALL->expectedGoals,kor:istatistik->ALL->cornerKicks,sari:istatistik->ALL->yellowCards,kir:istatistik->ALL->redCards';
+function ligYukle(lig) {
+  if (!ligVeri.has(lig)) {
+    ligVeri.set(lig, sayfali(() => db().from('ss_maclar').select(VERI_SUTUN).eq('lig_id', lig).neq('sezon', '99/00').order('tarih'))
+      .catch((e) => { ligVeri.delete(lig); throw e; }));
+  }
+  return ligVeri.get(lig);
+}
+const yuz = (p) => `%${sayi(100 * p)}`;
+const GUC = (x) => sayi(100 * x);
+
+function tahminKart(t, evId, depId, model, oran = null) {
+  const cubuk = `<div class="t-cubuk"><i class="ev" style="width:${100 * t.p1}%"></i><i class="ber" style="width:${100 * t.px}%"></i><i class="dep" style="width:${100 * t.p2}%"></i></div>`;
+  const ikili = (ad, p) => `<div class="t-satir"><span>${esc(ad)}</span><b>${yuz(p)}</b><span class="mini-cubuk"><i style="width:${100 * p}%"></i></span></div>`;
+  const kc = Math.round(t.korner.toplam) - 0.5, kk = Math.round(t.kart.toplam) - 0.5;
+  return `
+    <div class="t-ust">
+      <div><small class="soluk">Ev sahibi</small><b>${esc(takim(evId))}</b><span class="t-yuzde ev">${yuz(t.p1)}</span></div>
+      <div class="orta"><small class="soluk">Beraberlik</small><span class="t-yuzde ber">${yuz(t.px)}</span></div>
+      <div class="sag"><small class="soluk">Deplasman</small><b>${esc(takim(depId))}</b><span class="t-yuzde dep">${yuz(t.p2)}</span></div>
+    </div>
+    ${cubuk}
+    ${oran ? `<p class="not">Bahis piyasası: ${yuz(oran['1'])} · ${yuz(oran.X)} · ${yuz(oran['2'])} (yalnızca karşılaştırma için)</p>` : ''}
+    <div class="iki-sutun t-izgara">
+      <div class="kesfet-kart">
+        <h3>Goller</h3>
+        <p class="not">Beklenen skor ${sayi(t.lEv, 1)} – ${sayi(t.lDep, 1)}</p>
+        ${ikili('Karşılıklı gol', t.kg)}${ikili('1,5 üst', t.ust[1.5])}${ikili('2,5 üst', t.ust[2.5])}${ikili('3,5 üst', t.ust[3.5])}
+        <div class="etiketler t-skorlar">${t.skorlar.map((s) => `<span class="etiket">${s.ev}-${s.dep} <small class="soluk">${yuz(s.p)}</small></span>`).join('')}</div>
+      </div>
+      <div class="kesfet-kart">
+        <h3>Korner ve kart</h3>
+        <p class="not">Beklenen korner ${sayi(t.korner.ev, 1)} – ${sayi(t.korner.dep, 1)} (toplam ${sayi(t.korner.toplam, 1)})</p>
+        ${[kc - 1, kc, kc + 1].map((c) => ikili(`${sayi(c, 1)} üst korner`, t.korner.ust(c))).join('')}
+        <p class="not">Beklenen kart ${sayi(t.kart.ev, 1)} – ${sayi(t.kart.dep, 1)} (toplam ${sayi(t.kart.toplam, 1)})${t.kart.hakem !== 1 ? ` · hakem etkisi ×${sayi(t.kart.hakem, 2)}` : ''}</p>
+        ${[kk - 1, kk, kk + 1].filter((c) => c > 0).map((c) => ikili(`${sayi(c, 1)} üst kart`, t.kart.ust(c))).join('')}
+      </div>
+    </div>
+    ${model ? `<p class="not">Güç (lig ortalaması 100, yüksek olan iyi): ${esc(takim(evId))} hücum ${GUC(model.gol.hucum(evId))}, savunma ${GUC(1 / model.gol.savunma(evId))} ·
+      ${esc(takim(depId))} hücum ${GUC(model.gol.hucum(depId))}, savunma ${GUC(1 / model.gol.savunma(depId))}${model.yeni(evId) || model.yeni(depId) ? ' · lige yeni gelen takımın verisi az, tahmin daha belirsiz' : ''}.</p>` : ''}`;
+}
+
+async function tahminGoster() {
+  const v = surum;
+  yukleniyor();
+  $('#ozet').innerHTML = '';
+  let maclar;
+  try { maclar = await ligYukle(durum.lig); } catch (e) { return guncel(v) && hata(e); }
+  if (!guncel(v)) return;
+  if (maclar.length < 60) return bos(`${ligAd(durum.lig)} için henüz yeterli maç yok (${maclar.length}). Tahmin için en az 60 maç gerekiyor; veri çekimi bu lige gelince burada görünecek.`);
+  const simdi = Date.now();
+  const son = new Date(maclar[maclar.length - 1].tarih).getTime();
+  const guncelTakim = [...new Set(maclar.filter((m) => son - new Date(m.tarih) < 200 * 86400000).flatMap((m) => [m.ev_id, m.dep_id]))]
+    .sort((a, b) => takim(a).localeCompare(takim(b), 'tr'));
+  if (!guncelTakim.includes(durum.ev)) durum.ev = guncelTakim[0];
+  if (!guncelTakim.includes(durum.dep) || durum.dep === durum.ev) durum.dep = guncelTakim.find((t) => t !== durum.ev);
+  const hakemler = [...new Map(maclar.filter((m) => m.hakem && son - new Date(m.tarih) < 400 * 86400000).map((m) => [m.hakem.id, m.hakem.ad])).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'tr'));
+  const sec = (id, liste, deger) => { $(id).innerHTML = liste; $(id).value = deger ?? ''; };
+  const takimSec = guncelTakim.map((t) => `<option value="${t}">${esc(takim(t))}</option>`).join('');
+  sec('#ev', takimSec, durum.ev);
+  sec('#dep', takimSec, durum.dep);
+  sec('#hakem', `<option value="">Bilinmiyor</option>${hakemler.map(([id, ad]) => `<option value="${id}">${esc(ad)}</option>`).join('')}`, durum.hakem);
+
+  const model = modelKur(maclar, simdi);
+  const t = model.tahmin(durum.ev, durum.dep, { hakemId: durum.hakem || null });
+  $('#icerik').innerHTML = `
+    <div class="kesfet-kart genis t-ana">${durum.ev === durum.dep ? '<p class="not">İki farklı takım seçin.</p>' : tahminKart(t, durum.ev, durum.dep, model)}</div>
+    <p class="not">Model ${sayi(model.macSayisi)} maçtan öğrendi (yakın tarihli maçlar daha ağır basar). Ev sahibi avantajı ×${sayi(model.gol.ev, 2)}.
+      Bu yüzdeler tahmindir, kesinlik değildir.</p>
+    <h2 class="kesfet-baslik">Karne <small class="soluk">— geçmiş maçlarda ne kadar isabetliydik?</small></h2>
+    <div id="karne"><div class="bilgi">Hesaplanıyor…</div></div>`;
+  setTimeout(() => karneGoster(v, maclar), 30);
+}
+
+async function karneGoster(v, maclar) {
+  // Son 1 yılın maçları, her biri yalnızca kendinden önceki verilerle tahmin edilir
+  const son = new Date(maclar[maclar.length - 1].tarih).getTime();
+  const baslangic = son - 365 * 86400000;
+  const sonuclar = geriTest(maclar, { baslangic });
+  if (!guncel(v)) return;
+  // Bahis oranları yalnızca karşılaştırma için, sadece sınanan maçlar için çekilir
+  let oranlar = new Map();
+  try {
+    const sat = await parcali(sonuclar.map((s) => s.mac.id), (p) => db().from('ss_maclar').select('id,oranlar').in('id', p), 150);
+    oranlar = new Map(sat.map((r) => [r.id, r.oranlar]));
+  } catch { /* oranlar olmadan da karne çıkar */ }
+  if (!guncel(v)) return;
+  for (const s of sonuclar) s.mac = { ...s.mac, oranlar: oranlar.get(s.mac.id) };
+  const k = karne(sonuclar);
+  if (!k.n) { $('#karne').innerHTML = '<div class="bilgi">Karne için henüz yeterli geçmiş maç yok.</div>'; return; }
+  const f = (x, n) => (n ? sayi(x / n, 3) : '–');
+  const satir = (ad, biz, pi, n) => `<tr><td>${esc(ad)}</td><td class="sag">${f(biz, n)}</td><td class="sag">${f(pi, n)}</td><td class="sag">${n ? (biz <= pi ? '✅ biz' : `piyasa (${sayi((100 * (biz - pi)) / pi, 1)}% fark)`) : '–'}</td><td class="sag soluk">${sayi(n)}</td></tr>`;
+  const sonMaclar = sonuclar.slice(-15).reverse();
+  $('#karne').innerHTML = `
+    <section class="ozet">
+      ${[['Sınanan maç', sayi(k.n)], ['Bizim isabet (1-X-2)', `%${sayi((100 * k.dogru) / k.n)}`], ['Piyasanın isabeti', k.oranN ? `%${sayi((100 * k.oranDogru) / k.oranN)}` : '–'],
+        ['Rastgele tahmin', '%33']].map(([e, d]) => `<div class="stat"><b>${d}</b><span>${e}</span></div>`).join('')}
+    </section>
+    <p class="not">Brier puanı tahminin ne kadar isabetli olduğunu ölçer: <b>küçük olan iyi</b>. "Piyasa" bahis şirketlerinin oranlarından çıkan olasılık; dünyanın en iyi tahminlerinden biri, onu yakalamak hedefimiz.</p>
+    <div class="tablo-kaydir"><table><thead><tr><th>Tahmin</th><th class="sag">Biz</th><th class="sag">Piyasa</th><th class="sag">Daha iyi</th><th class="sag">Maç</th></tr></thead><tbody>
+      ${satir('Maç sonucu (1-X-2)', k.bizimOranli, k.oranBrier, k.oranN)}
+      ${satir('Karşılıklı gol', k.kg[0], k.kg[1], k.kg[2])}
+      ${satir('2,5 üst / alt', k.ust[0], k.ust[1], k.ust[2])}
+      ${satir('Korner üst / alt', k.kor[0], k.kor[1], k.kor[2])}
+      ${satir('Kart üst / alt', k.kart[0], k.kart[1], k.kart[2])}
+    </tbody></table></div>
+    <h3 class="ara-baslik">Dediğimiz oldu mu?</h3>
+    <p class="not">Bir sonuca örneğin %60 dediğimiz maçlarda o sonuç gerçekten yaklaşık %60 oranında çıktıysa yüzdelerimize güvenilebilir.</p>
+    <div class="tablo-kaydir"><table><thead><tr><th>Dediğimiz</th><th class="sag">Gerçekleşen</th><th class="sag">Tahmin sayısı</th></tr></thead><tbody>
+      ${k.kalibre.map((c) => `<tr><td>${yuz(c.ort)}</td><td class="sag"><b>${yuz(c.gercek)}</b></td><td class="sag soluk">${sayi(c.n)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <h3 class="ara-baslik">Son maçlar: tahminimiz ve sonuç</h3>
+    <div class="tablo-kaydir"><table><thead><tr><th>Maç</th><th class="sag">Skor</th><th class="sag">Biz (1 · X · 2)</th><th class="sag">Piyasa</th></tr></thead><tbody>
+      ${sonMaclar.map(({ mac: m, tahmin: t }) => {
+        const g = m.ev_gol > m.dep_gol ? 0 : m.ev_gol === m.dep_gol ? 1 : 2;
+        const p = [t.p1, t.px, t.p2], en = p.indexOf(Math.max(...p));
+        const o = oranOlasilik(m.oranlar, 'Full time');
+        return `<tr data-mac="${m.id}"><td>${esc(takim(m.ev_id))} – ${esc(takim(m.dep_id))} <small class="soluk">${esc(tarihAd(m.tarih))}</small></td>
+          <td class="sag"><b>${m.ev_gol}-${m.dep_gol}</b></td>
+          <td class="sag">${p.map((x, i) => `<span class="${i === g ? 'oldu' : ''}">${sayi(100 * x)}</span>`).join(' · ')} ${en === g ? '✅' : '❌'}</td>
+          <td class="sag soluk">${o ? [o['1'], o.X, o['2']].map((x) => sayi(100 * x)).join(' · ') : '–'}</td></tr>`;
+      }).join('')}
+    </tbody></table></div>`;
+  $('#karne').querySelectorAll('[data-mac]').forEach((t) => t.addEventListener('click', () => macDetay(+t.dataset.mac)));
+}
+
+// Maç detayında: maçtan önce ne demiştik?
+async function macOncesiTahmin(m) {
+  const maclar = await ligYukle(m.lig_id);
+  const simdi = new Date(m.tarih.slice(0, 10) + 'T00:00:00Z').getTime();
+  if (maclar.filter((x) => new Date(x.tarih).getTime() < simdi).length < 60) return null;
+  const model = modelKur(maclar, simdi);
+  return { t: model.tahmin(m.ev_id, m.dep_id, { hakemId: m.hakem?.id }), model };
+}

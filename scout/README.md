@@ -23,3 +23,12 @@ Aynı Supabase projesinde (futbol veritabanı), `ss_` ile başlayan tablolar:
 2. https://www.sofascore.com açılır, F12 > Console'a `scripts/sofascore_konsol.js` yapıştırılır.
    İPTAL = 3 maçlık deneme, TAMAM = tam çekim. Kaldığı yerden devam eder.
 3. Bitince `sofascore.sql` sonundaki komutla yazma izni kapatılır.
+
+## Maç tahmini (`js/tahmin.js`)
+Scout sayfasındaki **🔮 Tahmin** sekmesi. Model tarayıcıda, ligin maçlarından kurulur:
+- Gol: takım hücum/savunma gücü + ev avantajı (Dixon-Coles), hedef = %50 gol + %50 xG, yakın maçlar daha ağır
+  (yarılanma 240 gün), az maçlı takım ortalamaya, lige yeni gelen takım daha zayıf başlangıca çekilir; toplam gol
+  beklentisi %70 lig ortalamasına çekilir.
+- Korner ve kart: aynı güç modeli + negatif binom; kartta hakem çarpanı.
+- Karne: son 1 yılın her maçı yalnızca kendinden önceki verilerle tahmin edilir, bahis piyasasıyla (Brier) kıyaslanır.
+Ayarlar `AYAR` nesnesinde; veri arttıkça yeniden ayarlanmalı.
