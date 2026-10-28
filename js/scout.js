@@ -681,9 +681,10 @@ async function analizGoster() {
   try {
     if (!analizVeri) {
       const al = (u) => fetch(u, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
-      const [a, lab] = await Promise.all([al('veri/scout_pl_analiz.json'), al('veri/scout_model_lab.json').catch(() => null)]);
-      // Tahmin laboratuvarı ayrı dosyada (scout/analiz/model_lab.py); lig özetinin hemen ardından gösterilir
-      if (lab) a.bolumler.splice(1, 0, ...lab.bolumler);
+      const [a, lab, ara] = await Promise.all([al('veri/scout_pl_analiz.json'), al('veri/scout_model_lab.json').catch(() => null),
+        al('veri/scout_arastirma.json').catch(() => null)]);
+      // Tahmin laboratuvarı (model_lab.py) ve kazanç araştırması (arastirma.py) ayrı dosyalarda; lig özetinin hemen ardından gösterilir
+      a.bolumler.splice(1, 0, ...(ara?.bolumler || []), ...(lab?.bolumler || []));
       analizVeri = a;
     }
   } catch (e) { return guncel(v) && bos(`Analiz yüklenemedi: ${esc(e.message)}`); }

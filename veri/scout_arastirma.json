@@ -1,0 +1,266 @@
+{
+ "olusturuldu": "2026-10-28T17:23+00:00",
+ "bolumler": [
+  {
+   "id": "kazanc",
+   "baslik": "Para kazandırır mı? Bütün pazarlar ve bilgiler sınandı",
+   "ikon": "💰",
+   "ozet": "Maç sonucu, gol alt/üst, karşılıklı gol, korner ve kart pazarlarında; piyasa oranları, kendi modelimiz ve maç bilgileri (form, xG, aralarındaki son maçlar, iç saha/deplasman formu, oyun tarzı, korner/kart eğilimleri, hakem, eksikler, ilk 11) birlikte denendi. Fikirler 2025 yazından önceki maçlarla geliştirildi, 2025'in ikinci yarısında seçildi, 2026 maçlarında bir kez sınandı. Son sınavı kârla geçen tek yöntem: gol alt/üst pazarında açılış oranı (günler önce) ile, modelin en az %10 değer gördüğü bahisler — 372 bahiste +4,6% (kârlı olma olasılığı %71). Bu umut verici ama kanıt değil. Doğrulamada kârlı görünen yöntemlerin çoğu son sınavda zarara döndü: çok şey denenince şans eseri iyi görünen sonuçlar çıkar.",
+   "bloklar": [
+    {
+     "tur": "tablo",
+     "baslik": "Son sınava seçilen yöntemler",
+     "not": "Yalnızca doğrulama sonuçlarına bakılarak seçildi; son sınav bu yöntemleri ilk kez gördü. Değer eşiği: modelin olasılığı × oran − 1. CLV: alınan oranın maç saatindeki orandan ne kadar iyi olduğu (pozitif = piyasa sonradan bizim yönümüze geldi).",
+     "sutunlar": [
+      "Pazar",
+      "Zamanlama",
+      "Model",
+      "Değer eşiği",
+      "Doğrulama",
+      "Son sınav",
+      "%90 aralık",
+      "Bahis",
+      "Tutma",
+      "CLV"
+     ],
+     "sayisal": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "satirlar": [
+      [
+       "Gol alt/üst",
+       "açılış oranı (günler önce)",
+       "Piyasa + model + maç bilgileri",
+       "%10",
+       "+21,6%",
+       "+4,6%",
+       "-8,2% … +18,5%",
+       372,
+       "%48",
+       "+5,6%"
+      ],
+      [
+       "Gol alt/üst",
+       "maç saatindeki oran",
+       "Piyasa + model + maç bilgileri",
+       "%3",
+       "+8,5%",
+       "-4,9%",
+       "-13,2% … +4,1%",
+       672,
+       "%55",
+       "-0,8%"
+      ],
+      [
+       "Korner alt/üst",
+       "maç saatindeki oran",
+       "Piyasa + model + maç bilgileri (boosting)",
+       "%15",
+       "+24,0%",
+       "-5,3%",
+       "-22,2% … +11,8%",
+       79,
+       "%52",
+       "+1,0%"
+      ],
+      [
+       "Korner alt/üst",
+       "maç saatindeki oran",
+       "Piyasa + model + maç bilgileri",
+       "%10",
+       "+21,9%",
+       "-11,4%",
+       "-38,2% … +13,0%",
+       33,
+       "%48",
+       "+0,2%"
+      ],
+      [
+       "Korner alt/üst",
+       "açılış oranı (günler önce)",
+       "Piyasa + model + maç bilgileri (boosting)",
+       "%3",
+       "+12,2%",
+       "+0,5%",
+       "-10,7% … +13,0%",
+       175,
+       "%54",
+       "+1,2%"
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Her pazarda en iyi model (100 TL başına sonuç)",
+     "not": "Doğrulama: 2025 Temmuz–Aralık. Son sınav: 2026. Korner, kart ve karşılıklı gol oranları 2024/25'ten beri tutuluyor.",
+     "sutunlar": [
+      "Pazar",
+      "Zamanlama",
+      "En iyi model",
+      "Bahis (d)",
+      "Doğrulama",
+      "Bahis (s)",
+      "Son sınav",
+      "CLV"
+     ],
+     "sayisal": [
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "satirlar": [
+      [
+       "Maç sonucu",
+       "açılış oranı (günler önce)",
+       "Piyasa + model + maç bilgileri + ilk 11",
+       "157",
+       "+12,4%",
+       "205",
+       "+5,5%",
+       "+0,2%"
+      ],
+      [
+       "Maç sonucu",
+       "maç saatindeki oran",
+       "Piyasa + model + maç bilgileri",
+       "157",
+       "+10,6%",
+       "218",
+       "-8,4%",
+       "+0,5%"
+      ],
+      [
+       "Gol alt/üst",
+       "açılış oranı (günler önce)",
+       "Piyasa + bizim model",
+       "34",
+       "+27,2%",
+       "50",
+       "+52,0%",
+       "+29,5%"
+      ],
+      [
+       "Gol alt/üst",
+       "maç saatindeki oran",
+       "Piyasa + model + maç bilgileri",
+       "381",
+       "+8,5%",
+       "672",
+       "-4,9%",
+       "-0,8%"
+      ],
+      [
+       "Karşılıklı gol",
+       "açılış oranı (günler önce)",
+       "Piyasa + model + maç bilgileri",
+       "25",
+       "+3,2%",
+       "19",
+       "-7,9%",
+       "+0,1%"
+      ],
+      [
+       "Karşılıklı gol",
+       "maç saatindeki oran",
+       "Piyasa + model + maç bilgileri (boosting)",
+       "59",
+       "+8,5%",
+       "84",
+       "-5,0%",
+       "-0,8%"
+      ],
+      [
+       "Korner alt/üst",
+       "açılış oranı (günler önce)",
+       "Piyasa + model + maç bilgileri",
+       "27",
+       "+33,9%",
+       "40",
+       "-5,2%",
+       "+1,8%"
+      ],
+      [
+       "Korner alt/üst",
+       "maç saatindeki oran",
+       "Piyasa + model + maç bilgileri (boosting)",
+       "41",
+       "+24,0%",
+       "79",
+       "-5,3%",
+       "+1,0%"
+      ],
+      [
+       "Kart alt/üst",
+       "açılış oranı (günler önce)",
+       "Piyasa + model + maç bilgileri (boosting)",
+       "47",
+       "-0,1%",
+       "68",
+       "+5,3%",
+       "+7,2%"
+      ],
+      [
+       "Kart alt/üst",
+       "maç saatindeki oran",
+       "Yalnız piyasa (kalibre)",
+       "89",
+       "+1,4%",
+       "77",
+       "-7,1%",
+       "-2,8%"
+      ]
+     ]
+    },
+    {
+     "tur": "baslik",
+     "metin": "Sonuç: para kazanmak istiyorsan kuponu nasıl yapmalısın?"
+    },
+    {
+     "tur": "tablo",
+     "sutunlar": [
+      "Kural",
+      "Neden"
+     ],
+     "satirlar": [
+      [
+       "Kombine kupon yapma, tek maç oyna",
+       "Her seçimde şirketin payı var; kombinede paylar çarpılır. 3'lü kupon, aynı maçların tek tek oynanmasından her zaman daha çok kaybettirdi."
+      ],
+      [
+       "En umut verici pazar: gol alt/üst",
+       "Son sınavı kârla geçen tek yöntem bu pazarda. Korner, kart ve karşılıklı golde avantaj bulunamadı; kart pazarında model kaybettirdi."
+      ],
+      [
+       "Oranlar açılır açılmaz oyna",
+       "Avantaj yalnızca açılış oranlarında görüldü; maç saatine kadar piyasa düzeliyor ve avantaj kayboluyor."
+      ],
+      [
+       "Yalnızca model en az %10 değer gördüğünde oyna",
+       "Düşük eşiklerde (her maça bahis) her yöntem zarar etti."
+      ],
+      [
+       "Her bahse aynı küçük tutarı koy",
+       "Kârlı olma olasılığı %70 civarında; yani hâlâ %30 ihtimalle bu sonuç şans. Kaybetmeyi göze alamayacağın parayla oynama."
+      ],
+      [
+       "Önce kâğıt üzerinde dene",
+       "Gerçek parayla oynamadan önce birkaç ay modelin seçimlerini kaydedip izlemek, avantajın gerçek olup olmadığını gösterir."
+      ],
+      [
+       "İddaa oranları daha düşük",
+       "Bu sınama uluslararası şirketlerin oranlarıyla yapıldı. İddaa'nın payı çok daha yüksek; bu küçük avantajı tamamen silebilir."
+      ]
+     ]
+    }
+   ]
+  }
+ ]
+}

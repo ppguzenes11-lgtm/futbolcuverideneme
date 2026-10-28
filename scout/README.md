@@ -68,3 +68,12 @@ kurarak stratejileri (model + oranlar birleşimi, model, değer, rastgele) tutma
 node scout/analiz/pazar_cikar.mjs /tmp/pl /tmp/pl/pazar17.json
 python scout/analiz/kupon_veri.py /tmp/pl/pazar17.json /tmp/pl/takimlar.json /tmp/pl/maclar.json veri/scout_kupon_gecmis.json
 ```
+
+## Kazanç araştırması (`scout/analiz/arastirma.py`, `ozellikler.py`)
+Bütün pazarlarda (maç sonucu, gol alt/üst, karşılıklı gol, korner, kart) piyasa + model + maç bilgileri (form, xG, aralarındaki
+maçlar, iç saha/deplasman formu, oyun tarzı, korner/kart eğilimi, hakem, eksikler, ilk 11) ile modeller kurar; eğitim
+(< Temmuz 2025) → doğrulama (Temmuz–Aralık 2025, seçim) → son sınav (2026, bir kez) düzeniyle bahis kurallarını sınar.
+Bozuk açılış oranları (çizgi değişince kalan) ayıklanır. Çıktı Analiz sekmesinde "Para kazandırır mı?".
+```
+python scout/analiz/arastirma.py /tmp/pl veri/scout_kupon_gecmis.json /tmp/pl/arastirma.json && cp /tmp/pl/arastirma_site.json veri/scout_arastirma.json
+```
