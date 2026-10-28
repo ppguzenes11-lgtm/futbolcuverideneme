@@ -1,5 +1,5 @@
 import { db } from './db.js';
-import { modelKur, geriTest, karne, oranOlasilik } from './tahmin.js';
+import { modelKur, geriTest, karne, oranOlasilik, xgFormu, yeniOzellik, yeniOlasilik } from './tahmin.js';
 
 // Scout — SofaScore verisi (ss_ tabloları): maçlar, oyuncu sıralamaları, oyuncu profili, çekim durumu.
 const $ = (s) => document.querySelector(s);
@@ -463,6 +463,17 @@ function ligYukle(lig) {
   }
   return ligVeri.get(lig);
 }
+// Yeni model katsayıları (scout/analiz/model_egit.py); bir lig için yoksa mevcut model kullanılır
+let katsayiSoz = null;
+const katsayiYukle = () => (katsayiSoz ||= fetch('veri/scout_model_katsayi.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+
+/** Mevcut modelin tahminine yeni modelin 1-X-2 olasılıklarını ekler; temel olasılıklar t.temel'de kalır. */
+function yeniyleBirlestir(t, form, k, evId, depId) {
+  if (!k) return t;
+  const p = yeniOlasilik(yeniOzellik(t, form, evId, depId), k);
+  return { ...t, ...p, temel: { p1: t.p1, px: t.px, p2: t.p2 } };
+}
+
 const yuz = (p) => `%${sayi(100 * p)}`;
 const GUC = (x) => sayi(100 * x);
 
@@ -477,6 +488,8 @@ function tahminKart(t, evId, depId, model, oran = null) {
       <div class="sag"><small class="soluk">Deplasman</small><b>${esc(takim(depId))}</b><span class="t-yuzde dep">${yuz(t.p2)}</span></div>
     </div>
     ${cubuk}
+    ${t.temel ? `<p class="not">Yeni model (mevcut model + son maçlardaki xG formu). Yalnızca mevcut model: ${yuz(t.temel.p1)} · ${yuz(t.temel.px)} · ${yuz(t.temel.p2)}.
+      Gol, korner ve kart tahminleri mevcut modelden.</p>` : ''}
     ${oran ? `<p class="not">Bahis piyasası: ${yuz(oran['1'])} · ${yuz(oran.X)} · ${yuz(oran['2'])} (yalnızca karşılaştırma için)</p>` : ''}
     <div class="iki-sutun t-izgara">
       <div class="kesfet-kart">
@@ -530,9 +543,13 @@ async function tahminGoster() {
   sec('#hakem', `<option value="">Bilinmiyor</option>${hakemler.map(([id, ad]) => `<option value="${id}">${esc(ad)}</option>`).join('')}`, durum.hakem);
 
   const model = modelKur(maclar, simdi);
-  const t = model.tahmin(durum.ev, durum.dep, { hakemId: durum.hakem || null });
+  const form = xgFormu(maclar, simdi);
+  const kat = (await katsayiYukle())[durum.lig];
+  if (!guncel(v)) return;
+  const tahminEt = (ev, dep, hakemId) => yeniyleBirlestir(model.tahmin(ev, dep, { hakemId }), form, kat, ev, dep);
+  const t = tahminEt(durum.ev, durum.dep, durum.hakem || null);
   const fikHtml = fikstur.length ? `<h2 class="kesfet-baslik">Yaklaşan maçlar</h2><div class="mac-liste t-fikstur">${fikstur.map((f) => {
-    const p = model.tahmin(f.ev_id, f.dep_id, { hakemId: f.hakem?.id });
+    const p = tahminEt(f.ev_id, f.dep_id, f.hakem?.id);
     const secili = f.ev_id === durum.ev && f.dep_id === durum.dep;
     return `<button class="mac ${secili ? 'secili' : ''}" data-fik="${f.id}">
       <span class="mac-zaman">${esc(tarihAd(f.tarih))}<small>${esc(saatAd(f.tarih))}${f.durum === 'postponed' ? ' · ertelendi' : ''}</small></span>
@@ -547,6 +564,9 @@ async function tahminGoster() {
       Bu yüzdeler tahmindir, kesinlik değildir.</p>
     ${fikHtml}
     <h2 class="kesfet-baslik">Karne <small class="soluk">— geçmiş maçlarda ne kadar isabetliydik?</small></h2>
+    ${kat ? `<p class="not"><b>Yeni modelin dürüst sınaması</b> (${sayi(kat.sinama.mac)} maç, her sezon önceki sezonlarla eğitilip sınandı):
+      maç sonucu isabeti %${sayi(100 * kat.sinama.yeni_isabet, 1)}, mevcut model %${sayi(100 * kat.sinama.temel_isabet, 1)}.
+      Aşağıdaki karne mevcut modele aittir; ayrıntılar Analiz → Tahmin laboratuvarı'nda.</p>` : ''}
     <div id="karne"><div class="bilgi">Hesaplanıyor…</div></div>`;
   $('#icerik').querySelectorAll('[data-fik]').forEach((b) => b.addEventListener('click', () => {
     const f = fikstur.find((x) => x.id === +b.dataset.fik);
@@ -614,7 +634,9 @@ async function macOncesiTahmin(m) {
   const simdi = new Date(m.tarih.slice(0, 10) + 'T00:00:00Z').getTime();
   if (maclar.filter((x) => new Date(x.tarih).getTime() < simdi).length < 60) return null;
   const model = modelKur(maclar, simdi);
-  return { t: model.tahmin(m.ev_id, m.dep_id, { hakemId: m.hakem?.id }), model };
+  const kat = (await katsayiYukle())[m.lig_id];
+  const t = yeniyleBirlestir(model.tahmin(m.ev_id, m.dep_id, { hakemId: m.hakem?.id }), xgFormu(maclar, simdi), kat, m.ev_id, m.dep_id);
+  return { t, model };
 }
 
 // ---------- Analiz (bilgi tablosu) ----------

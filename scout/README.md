@@ -48,3 +48,14 @@ Yaş eğrisi 10 sezon gelince eklenecek (4 sezonla sonuç gürültülü).
 Maçtan önce bilinen bilgilerle (güç, form, dinlenme, eksikler, ilk 11, mevcut Dixon-Coles) özellik üretir; modelleri
 ileriye doğru sınar (her test sezonu yalnızca önceki sezonlarla eğitilir) ve bahis piyasasıyla kıyaslar.
 `python scout/analiz/model_lab.py /tmp/pl veri/scout_model_lab.json` — sonuç Analiz sekmesinde "Tahmin laboratuvarı".
+
+## Yeni tahmin modeli (sitede canlı)
+Tahmin sekmesindeki 1-X-2 olasılıkları = mevcut Dixon-Coles + son maçlardaki xG formu, lojistik regresyonla
+(`js/tahmin.js`: `xgFormu`, `yeniOzellik`, `yeniOlasilik`). Katsayılar `veri/scout_model_katsayi.json` (lig bazında);
+yeni veri gelince yeniden eğitin:
+```
+node scout/analiz/ozellik_cikar.mjs /tmp/pl /tmp/pl/oz17.json
+python scout/analiz/model_egit.py /tmp/pl/oz17.json 17 veri/scout_model_katsayi.json
+```
+Katsayısı olmayan ligde mevcut model kullanılır. İlk 11'li sürüm, maç öncesi kadroları otomatik çeken bir
+sistem kurulunca eklenecek.

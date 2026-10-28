@@ -281,3 +281,48 @@ export function karne(sonuclar) {
   k.kalibre = kutu.filter((c) => c.n).map((c, i) => ({ ort: c.p / c.n, gercek: c.oldu / c.n, n: c.n }));
   return k;
 }
+
+// ---------- Yeni model (Tahmin laboratuvarının kazananı) ----------
+// Mevcut modelin olasılıkları + son maçlardaki xG formu farkı, çok sınıflı lojistik regresyonla birleştirilir.
+// Katsayılar scout/analiz/model_egit.py ile, sitedeki bu fonksiyonların ürettiği özelliklerle eğitilir
+// (veri/scout_model_katsayi.json). Yalnızca maçtan önce bilinen bilgiler kullanılır.
+
+const XG_ORT = { xgf: 1.45, xga: 1.45 };
+const XG_YENI = { xgf: 1.15, xga: 1.8 };
+
+/** Her takımın tahmin anına kadarki xG formu: üstel ağırlıklı ortalama (yarılanma 5 maç). */
+export function xgFormu(maclar, simdi, yarilanma = 5) {
+  const a = 1 - 0.5 ** (1 / yarilanma);
+  const sirali = maclar.filter((m) => new Date(m.tarih).getTime() < simdi).sort((x, y) => new Date(x.tarih) - new Date(y.tarih));
+  const ilk = sirali.length ? new Date(sirali[0].tarih).getTime() : simdi;
+  const durum = new Map();
+  for (const m of sirali) {
+    const t = new Date(m.tarih).getTime();
+    for (const [id, i] of [[m.ev_id, 0], [m.dep_id, 1]]) {
+      if (!durum.has(id)) durum.set(id, { ...(t - ilk > 60 * GUN ? XG_YENI : XG_ORT), n: 0 });
+      const d = durum.get(id);
+      const xf = m.xg?.[i], xa = m.xg?.[1 - i];
+      if (xf == null || xa == null) continue;
+      if (d.n === 0) { d.xgf = xf; d.xga = xa; } else { d.xgf = (1 - a) * d.xgf + a * xf; d.xga = (1 - a) * d.xga + a * xa; }
+      d.n++;
+    }
+  }
+  const varsayilan = simdi - ilk > 60 * GUN ? XG_YENI : XG_ORT;
+  return (id) => durum.get(id) ?? varsayilan;
+}
+
+/** Yeni modelin özellikleri: [log(p1/p2), log(px), xG formu net farkı] */
+export function yeniOzellik(t, form, evId, depId) {
+  const fe = form(evId), fd = form(depId);
+  return [Math.log(t.p1 / t.p2), Math.log(t.px), (fe.xgf - fe.xga) - (fd.xgf - fd.xga)];
+}
+
+/** Katsayılarla 1-X-2 olasılıkları (softmax). k: {ort, std, b:[3], w:[3][n]} */
+export function yeniOlasilik(ozellik, k) {
+  const z = ozellik.map((x, i) => (x - k.ort[i]) / k.std[i]);
+  const s = k.b.map((b, c) => b + k.w[c].reduce((t, w, i) => t + w * z[i], 0));
+  const en = Math.max(...s);
+  const e = s.map((x) => Math.exp(x - en));
+  const top = e.reduce((x, y) => x + y, 0);
+  return { p1: e[0] / top, px: e[1] / top, p2: e[2] / top };
+}
