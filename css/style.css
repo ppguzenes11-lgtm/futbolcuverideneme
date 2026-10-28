@@ -275,3 +275,8 @@ td span.oldu { font-weight: 800; text-decoration: underline; }
 .k-arti { color: #15803d; font-weight: 700; } .k-eksi { color: var(--negatif); font-weight: 700; }
 tr.secili-satir td { background: color-mix(in srgb, var(--vurgu) 10%, var(--kart)); }
 tr.formul-satir td { background: color-mix(in srgb, #eab308 12%, var(--kart)); }
+.k-mod { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.k-mod-b { font: inherit; font-weight: 700; flex: 1 1 200px; border: 1px solid var(--cizgi); background: var(--kart); color: var(--yazi); border-radius: 12px; padding: 10px 14px; cursor: pointer; text-align: left; }
+.k-mod-b small { display: block; font-weight: 400; color: var(--soluk); font-size: 12px; }
+.k-mod-b.secili { border-color: var(--vurgu); box-shadow: inset 0 0 0 1px var(--vurgu); background: color-mix(in srgb, var(--vurgu) 10%, var(--kart)); }
+.k-sec small.k-iddaa { color: var(--yazi); margin-top: 2px; }

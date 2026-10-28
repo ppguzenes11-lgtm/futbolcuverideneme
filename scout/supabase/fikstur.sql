@@ -26,3 +26,8 @@ drop policy if exists "yazma" on ss_fikstur;
 create policy "yazma" on ss_fikstur for insert with check (true);
 drop policy if exists "guncelleme" on ss_fikstur;
 create policy "guncelleme" on ss_fikstur for update using (true) with check (true);
+
+-- Gerçek kupon modu: yaklaşan maçların bahis oranları (konsol betiği 7 gün içindeki maçlar için çeker).
+-- Biçim ss_maclar.oranlar ile aynı: {"Match goals 2.5": [["Over", açılış, güncel, null], ["Under", …]], …}
+alter table ss_fikstur add column if not exists oranlar jsonb;
+alter table ss_fikstur add column if not exists oran_guncellendi timestamptz;

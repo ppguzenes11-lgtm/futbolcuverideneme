@@ -871,10 +871,121 @@ function karsilastirCiz(ayar, haftalar) {
       birkaç şanslı hafta kârı büyük gösterebilir, bu yüzden "100 TL başına" sütununu kesin bir kanıt olarak okumayın.</p>`;
 }
 
+// ---------- Gerçek kupon (yaklaşan maçlar) ----------
+// scout/analiz/canli_kupon.py her 3 saatte bir (GitHub Actions) formülü oranı belli yaklaşan maçlara uygular.
+let kuponMod = 'gercek';
+let canliVeri = null, canliGecmis = null;
+const canliAyar = { lig: null, para: 100, sayi: 1 };
+const gunSaat = (t) => new Date(t).toLocaleString('tr-TR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const kuponModSecici = () => `<div class="k-mod">
+    <button class="k-mod-b ${kuponMod === 'gercek' ? 'secili' : ''}" data-mod="gercek">🎯 Gerçek kupon <small>yaklaşan maçlar</small></button>
+    <button class="k-mod-b ${kuponMod === 'gecmis' ? 'secili' : ''}" data-mod="gecmis">🎲 Simülatör <small>oynanmış maçlar</small></button>
+  </div>`;
+const kuponModBagla = () => document.querySelectorAll('.k-mod-b').forEach((b) => b.addEventListener('click', () => {
+  if (kuponMod !== b.dataset.mod) { kuponMod = b.dataset.mod; kuponGoster(); }
+}));
+
+function canliKarne() {
+  const b = (canliGecmis?.bahisler ?? []).filter((x) => x.sonuc != null);
+  if (!b.length) return '<p class="not">Canlı karne: formülün burada önerdiği bahisler oynandıkça sonuçları buraya işlenecek (henüz sonuçlanan yok).</p>';
+  const tut = b.filter((x) => x.sonuc).length;
+  const net = b.reduce((a, x) => a + (x.sonuc ? x.oran - 1 : -1), 0);
+  const son = [...b].sort((x, y) => (y.t > x.t ? 1 : -1)).slice(0, 12);
+  return `<h2 class="kesfet-baslik">📒 Canlı karne (önerildikten sonra oynanan maçlar)</h2>
+    <div class="k-alt">
+      <div><small class="soluk">Sonuçlanan bahis</small><b>${sayi(b.length)}</b></div>
+      <div><small class="soluk">Tutan</small><b>${sayi(tut)} (%${sayi(100 * tut / b.length)})</b></div>
+      <div><small class="soluk">Her bahse 100 TL</small><b class="${net >= 0 ? 'k-arti' : 'k-eksi'}">${net >= 0 ? '+' : ''}${tl(100 * net)}</b></div>
+      <div><small class="soluk">100 TL başına</small><b class="${net >= 0 ? 'k-arti' : 'k-eksi'}">${net >= 0 ? '+' : ''}${sayi(100 * net / b.length, 1)} TL</b></div>
+    </div>
+    <details class="tablo-gor"><summary>Son sonuçlar</summary>${son.map((x) => `<div class="k-satir ${x.sonuc ? 'tuttu' : 'yatti'}">
+      <div class="k-mac"><b>${esc(x.e)} – ${esc(x.d)}</b><small>${esc(x.lig)} · ${esc(gunSaat(x.t))}</small></div>
+      <div class="k-sec"><span class="etiket">${esc(x.secim)}</span><small>formül %${sayi(100 * x.p)}</small></div>
+      <div class="k-oran">${sayi(x.oran, 2)}</div><div class="k-sonuc"><b>${x.skor ? x.skor.join('–') : ''}</b> ${x.sonuc ? '✅' : '❌'}</div></div>`).join('')}</details>
+    <p class="not">Oran, bahsin ilk önerildiği andaki SofaScore oranıdır. Az sayıda bahiste sonuç şansa çok bağlıdır; en az birkaç yüz bahis birikmeden karar vermeyin.</p>`;
+}
+
+function canliCiz() {
+  const a = canliAyar;
+  const L = canliVeri[a.lig];
+  const kart = (b) => `<div class="k-satir">
+      <div class="k-mac"><b>${esc(b.e)} – ${esc(b.d)}</b><small>${esc(gunSaat(b.t))}</small></div>
+      <div class="k-sec"><span class="etiket">${esc(b.secim)}</span><small>formül %${sayi(100 * b.p)} · oranlara göre %${sayi(100 * b.piyasa_p)} · değer +%${sayi(100 * b.deger)}</small>
+        <small class="k-iddaa">İddaa'da oran <b>${sayi(b.en_az_oran, 2)}</b> ya da üstüyse oyna</small></div>
+      <div class="k-oran">${sayi(b.oran, 2)}</div>
+      <div class="k-sonuc"><span class="soluk">${sayi(a.para)} TL → ${tl(a.para * b.oran)}</span></div>
+    </div>`;
+  const B = L.bahisler;
+  const beklenen = B.reduce((x, b) => x + a.para * b.deger, 0);
+  let kupon = '';
+  if (a.sayi > 1 && B.length >= a.sayi) {
+    const sec = [...B].sort((x, y) => y.p - x.p).slice(0, a.sayi);
+    const oran = sec.reduce((x, b) => x * b.oran, 1), sans = sec.reduce((x, b) => x * b.p, 1);
+    kupon = `<div class="kesfet-kart genis k-kupon">
+      <div class="k-ust"><b>${a.sayi} maçlık kupon</b><span class="soluk">formülün en emin olduğu ${a.sayi} seçim</span></div>
+      ${sec.map(kart).join('')}
+      <div class="k-alt">
+        <div><small class="soluk">Toplam oran</small><b>${sayi(oran, 2)}</b></div>
+        <div><small class="soluk">Formüle göre tutma ihtimali</small><b>%${sayi(100 * sans, 1)}</b></div>
+        <div><small class="soluk">Bahis</small><b>${tl(a.para)}</b></div>
+        <div><small class="soluk">Olası kazanç</small><b>${tl(a.para * oran)}</b></div>
+      </div>
+      <p class="not">Kombine kuponda her maçın şirket payı çarpılarak büyür; araştırmada kârlı çıkan yol <b>tek tek oynamaktı</b>.</p>
+    </div>`;
+  } else if (a.sayi > 1) {
+    kupon = `<div class="bilgi">${a.sayi} maçlık kupon için yeterli değerli seçim yok (şu an ${B.length}). Maç sayısını düşürün.</div>`;
+  }
+  const oranli = L.maclar.length;
+  $('#k-alan').innerHTML = `
+    ${kupon}
+    <div class="kesfet-kart genis k-kupon">
+      <div class="k-ust"><b>Formülün önerdiği tek bahisler (${sayi(B.length)})</b><span class="soluk">güncellendi: ${esc(gunSaat(L.olusturuldu))}</span></div>
+      ${B.length ? B.map(kart).join('') : `<div class="bilgi">${oranli ? `Oranı belli ${sayi(oranli)} yaklaşan maçta formül %${sayi(100 * L.esik)}+ değerli seçim bulamadı. Bu normal: formül seçici, bazı haftalar hiç oynamaz.` : L.egitim_satir < 3000 ? 'Bu ligde formülü kuracak kadar geçmiş veri henüz yok.' : 'Yaklaşan maçların oranları henüz gelmedi (oranlar maçtan birkaç gün önce açılır, konsol betiği 3 saatte bir çeker).'}</div>`}
+      ${B.length ? `<div class="k-alt">
+        <div><small class="soluk">Bahis sayısı</small><b>${sayi(B.length)}</b></div>
+        <div><small class="soluk">Toplam yatırılan</small><b>${tl(a.para * B.length)}</b></div>
+        <div><small class="soluk">Formüle göre beklenen kâr</small><b class="k-arti">+${tl(beklenen)}</b></div>
+        <div><small class="soluk">Ort. oran</small><b>${sayi(B.reduce((x, b) => x + b.oran, 0) / B.length, 2)}</b></div>
+      </div>` : ''}
+    </div>
+    <div class="kesfet-kart genis">${canliKarne()}</div>`;
+}
+
+async function gercekKuponGoster(v) {
+  try {
+    canliVeri = await fetch('veri/scout_canli_kupon.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+    canliGecmis = await fetch('veri/scout_canli_gecmis.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  } catch { canliVeri = {}; }
+  if (!guncel(v)) return;
+  const ligler = Object.keys(canliVeri);
+  const a = canliAyar;
+  if (!ligler.includes(a.lig)) a.lig = ligler[0] ?? null;
+  $('#icerik').innerHTML = `${kuponModSecici()}
+    <div class="kesfet-kart genis">
+      <h2 class="kesfet-baslik" style="margin-top:0">🎯 Gerçek kupon: henüz oynanmamış maçlar</h2>
+      <p class="not">Araştırmada son sınavı geçen tek formül uygulanır: <b>gol alt/üst</b>, formülün gördüğü olasılık × oran en az <b>%10 kâr</b> gösteriyorsa.
+        Oranlar SofaScore'dan (birkaç şirketin ortalamasına yakın). <b>İddaa genelde daha düşük oran verir</b>: her seçimde yazan "en az" oranı
+        İddaa'da bulamazsan o bahsi oynama. Geçmişte bu formül 372 bahiste +%4,6 getirdi; bu kesin kazanç değil, kayıp haftaları normal.</p>
+      ${ligler.length ? `<div class="arac k-ayar">
+        <label class="alan"><span>Lig</span><select id="c-lig">${ligler.map((l) => `<option>${esc(l)}</option>`).join('')}</select></label>
+        <label class="alan"><span>Bahis başına (TL)</span><input id="c-para" type="number" min="1" step="10" value="${a.para}"></label>
+        <label class="alan"><span>Oynama biçimi</span><select id="c-sayi"><option value="1">Tek tek (önerilen)</option>${[2, 3, 4, 5].map((n) => `<option value="${n}">${n} maçlık kupon</option>`).join('')}</select></label>
+      </div>` : ''}
+    </div>
+    <div id="k-alan">${ligler.length ? '' : '<div class="bilgi">Gerçek kupon verisi henüz hazırlanmadı. İlk hesaplama birkaç saat içinde kendiliğinden yapılır.</div>'}</div>`;
+  kuponModBagla();
+  if (!ligler.length) return;
+  $('#c-lig').value = a.lig; $('#c-sayi').value = String(a.sayi);
+  const oku = () => { a.lig = $('#c-lig').value; a.para = Math.max(1, Number($('#c-para').value) || 100); a.sayi = +$('#c-sayi').value; canliCiz(); };
+  ['#c-lig', '#c-para', '#c-sayi'].forEach((k) => $(k).addEventListener('change', oku));
+  canliCiz();
+}
+
 async function kuponGoster() {
   const v = surum;
   yukleniyor();
   $('#ozet').innerHTML = '';
+  if (kuponMod === 'gercek') return gercekKuponGoster(v);
   try {
     kuponVeri ||= await fetch('veri/scout_kupon_gecmis.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
     formulVeri ||= await fetch('veri/scout_formul.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
@@ -882,7 +993,7 @@ async function kuponGoster() {
   if (!guncel(v)) return;
   const haftalar = kuponHaftalari();
   const a = kuponAyar;
-  $('#icerik').innerHTML = `
+  $('#icerik').innerHTML = `${kuponModSecici()}
     <div class="kesfet-kart genis">
       <h2 class="kesfet-baslik" style="margin-top:0">🎲 Kupon simülatörü</h2>
       <p class="not">${esc(kuponVeri.lig)}'in ${sayi(kuponVeri.maclar.length)} geçmiş maçında, ${sayi(haftalar.length)} haftada oynanır. Model her maçı <b>sonucu bilmeden</b> tahmin etti;
@@ -908,6 +1019,7 @@ async function kuponGoster() {
     $('#k-sayi-alan').style.display = a.tip === 'sayi' ? '' : 'none';
     $('#k-hedef-alan').style.display = a.tip === 'hedef' ? '' : 'none';
   };
+  kuponModBagla();
   $('#k-tip').value = a.tip; $('#k-sayi').value = a.sayi; $('#k-hedef').value = a.hedef;
   $('#k-strateji').value = a.strateji; $('#k-oran').value = a.oran; $('#k-enaz').value = String(a.enAz);
   ayarOku();

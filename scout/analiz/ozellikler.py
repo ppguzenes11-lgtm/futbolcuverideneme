@@ -166,8 +166,8 @@ def dc_tahmin(model, ev, dep):
 SATIRLAR = []
 gecmis = []          # (gün, ev, dep, hedef_ev, hedef_dep)  — DC için
 dc_onbellek = {}
-for m in MACLAR:
-    g = gun(m['tarih'])
+def ozellik_hesapla(m, g):
+    """Maçtan önce bilinen bilgilerle özellikler (o anki durumdan). Yaklaşan maçlarda ilk 11 ve eksikler boş olabilir."""
     e, d = m['ev_id'], m['dep_id']
     yeni = {t: yeni_mi(t, g) for t in (e, d)}
     f = {}
@@ -190,14 +190,14 @@ for m in MACLAR:
     f['dinlenme_fark'] = f['dinlenme_ev'] - f['dinlenme_dep']
     # --- eksik oyuncular (maçtan önce açıklanır)
     for t, on, ev_mi in ((e, 'ev', True), (d, 'dep', False)):
-        eksik = [x for x in (m['eksikler'] or []) if x.get('ev') == ev_mi and x.get('tip') == 'missing' and x.get('id')]
+        eksik = [x for x in (m.get('eksikler') or []) if x.get('ev') == ev_mi and x.get('tip') == 'missing' and x.get('id')]
         kalite = sum(max(oyuncu_not[x['id']].v - 6.6, 0) * oyuncu_sure[x['id']].v for x in eksik if oyuncu_not[x['id']].n >= 3)
         f[f'eksik_sayi_{on}'] = len(eksik)
         f[f'eksik_kalite_{on}'] = kalite
     f['eksik_kalite_fark'] = f['eksik_kalite_ev'] - f['eksik_kalite_dep']
     # --- ilk 11 (maçtan ~1 saat önce açıklanır)
     for t, on in ((e, 'ev'), (d, 'dep')):
-        xi = [r for r in OM[m['id']] if r['takim_id'] == t and not r['yedek']]
+        xi = [r for r in OM.get(m['id'], []) if r['takim_id'] == t and not r['yedek']]
         notlar = [oyuncu_not[r['oyuncu_id']].v if oyuncu_not[r['oyuncu_id']].n >= 3 else 6.6 for r in xi if r['mevki'] != 'G']
         kaleci = [oyuncu_not[r['oyuncu_id']].v if oyuncu_not[r['oyuncu_id']].n >= 3 else 6.6 for r in xi if r['mevki'] == 'G']
         f[f'xi_not_{on}'] = float(np.mean(notlar)) if notlar else 6.7
@@ -238,6 +238,15 @@ for m in MACLAR:
     dc = dc_tahmin(dc_onbellek[int(g)], e, d) if dc_onbellek[int(g)] else None
     if dc:
         f['dc_p1'], f['dc_px'], f['dc_p2'], f['dc_lev'], f['dc_ldep'] = dc
+    return f
+
+
+for m in MACLAR:
+    g = gun(m['tarih'])
+    e, d = m['ev_id'], m['dep_id']
+    yeni = {t: yeni_mi(t, g) for t in (e, d)}
+    f = ozellik_hesapla(m, g)
+    hk = (m.get('hakem') or {}).get('id')
     sonuc = 0 if m['ev_gol'] > m['dep_gol'] else 1 if m['ev_gol'] == m['dep_gol'] else 2
     oran = None
     ft = (m['oranlar'] or {}).get('Full time')

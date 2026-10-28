@@ -1,0 +1,48 @@
+# Scout — gerçek kupon modu: yaklaşan maçlara formülü uygular ve veri/scout_canli_kupon.json'u günceller.
+# Veriyi Supabase'den yalnızca okur; sonucu depoya yazar (Vercel siteyi yeniden yayınlar).
+name: Canlı kupon
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: canli-kupon
+  cancel-in-progress: false
+
+jobs:
+  hesapla:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: pip install numpy scikit-learn
+      - name: Ligleri hesapla
+        working-directory: scout/analiz
+        run: |
+          for lig in "17:Premier Lig" "52:Süper Lig" "37:Eredivisie"; do
+            id="${lig%%:*}"; ad="${lig#*:}"; k="$RUNNER_TEMP/lig$id"
+            python veri_indir.py "$k" "$id"
+            [ "$(python -c "import json;print(len(json.load(open('$k/maclar.json'))))")" -ge 400 ] || { echo "$ad: veri az, atlandı"; continue; }
+            node pazar_cikar.mjs "$k" "$k/pazar.json"
+            node fikstur_model.mjs "$k" "$k/fikstur_model.json"
+            python canli_kupon.py "$k" "$ad" "$k/pazar.json" "$k/fikstur_model.json" ../../veri/scout_canli_kupon.json ../../veri/scout_canli_gecmis.json
+          done
+      - name: Değiştiyse kaydet
+        run: |
+          git config user.name "scout-bot"
+          git config user.email "scout-bot@users.noreply.github.com"
+          git add veri/scout_canli_kupon.json veri/scout_canli_gecmis.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Canlı kupon: yaklaşan maçlar güncellendi"
+          git pull --rebase origin main && git push origin HEAD:main

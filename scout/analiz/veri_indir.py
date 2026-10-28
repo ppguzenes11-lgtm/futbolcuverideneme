@@ -1,6 +1,7 @@
 """Scout analizi için Supabase'den ham veriyi indirir (yalnızca okuma).
 Kullanım: python veri_indir.py <klasör> [lig_id=17]"""
-import json, sys, urllib.request, urllib.parse, os
+import json, sys, urllib.request, urllib.parse, urllib.error, os
+from datetime import datetime, timezone
 
 URL = 'https://oixqyntsoatmerjxltki.supabase.co/rest/v1/'
 KEY = 'sb_publishable_She16NlbAEODVuBv9DqfIw_5AfTJ9pA'
@@ -28,7 +29,14 @@ if __name__ == '__main__':
                    f'&lig_id=eq.{lig}&sezon=neq.99/00')
     ids = {m['id'] for m in maclar}
     oyuncu_mac = [r for r in hepsi('ss_oyuncu_mac', 'mac_id,oyuncu_id,takim_id,ev,yedek,mevki,dakika,puan,ist') if r['mac_id'] in ids]
-    for ad, veri in [('maclar', maclar), ('oyuncu_mac', oyuncu_mac), ('oyuncular', hepsi('ss_oyuncular', 'id,ad,mevki,dogum,ulke,boy,ayak')),
+    # Yaklaşan maçlar (gerçek kupon modu); oran sütunu yoksa oransız
+    simdi = urllib.parse.quote(datetime.now(timezone.utc).isoformat(timespec='seconds'))
+    fsut = 'id,lig_id,sezon,hafta,tarih,ev_id,ev_ad,dep_id,dep_ad,durum,hakem'
+    try:
+        fikstur = hepsi('ss_fikstur', fsut + ',oranlar,oran_guncellendi', f'&lig_id=eq.{lig}&tarih=gt.{simdi}')
+    except urllib.error.HTTPError:
+        fikstur = hepsi('ss_fikstur', fsut, f'&lig_id=eq.{lig}&tarih=gt.{simdi}')
+    for ad, veri in [('fikstur', fikstur), ('maclar', maclar), ('oyuncu_mac', oyuncu_mac), ('oyuncular', hepsi('ss_oyuncular', 'id,ad,mevki,dogum,ulke,boy,ayak')),
                      ('takimlar', hepsi('ss_takimlar', 'id,ad')), ('anahtarlar', hepsi('ss_anahtarlar', 'sira,anahtar'))]:
         json.dump(veri, open(os.path.join(klasor, ad + '.json'), 'w'))
         print(ad, len(veri))

@@ -79,3 +79,11 @@ python scout/analiz/arastirma.py /tmp/pl veri/scout_kupon_gecmis.json /tmp/pl/ar
 ```
 Kazanan formülün dürüst (görmeden) olasılıkları `veri/scout_formul.json`'a yazılır (`arastirma.py` çıktısı `*_formul.json`);
 kupon simülatöründe "💰 Araştırmanın formülü" stratejisi ve "her uygun maça tek bahis" satırı bunu kullanır.
+
+## Gerçek kupon modu (yaklaşan maçlar)
+- Konsol betiği 3 saatte bir yaklaşan maçları (`ss_fikstur`) ve 7 gün içindekilerin oranlarını (`ss_fikstur.oranlar`) yazar;
+  tüm çekim bitince sayfa açık kaldıkça takipte kalır (yeni biten maçlar + oranlar). Oran sütunları için `supabase/fikstur.sql`'in son iki satırı.
+- `.github/workflows/canli_kupon.yml` 3 saatte bir (ve elle) her lig için: `veri_indir.py` → `pazar_cikar.mjs` → `fikstur_model.mjs` →
+  `canli_kupon.py`. Araştırmanın gol alt/üst formülünü tüm geçmişle eğitip oranı belli yaklaşan maçlara uygular (%10+ değer, maç başına bir seçim).
+- Çıktılar: `veri/scout_canli_kupon.json` (lig → öneriler) ve `veri/scout_canli_gecmis.json` (önerilen her bahis bir kez, sonucu sonradan işlenir: canlı karne).
+- Sitede Kupon sekmesi → "Gerçek kupon".

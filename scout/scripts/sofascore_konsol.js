@@ -39,6 +39,17 @@
     return b ? Math.round((1 + a / b) * 100) / 100 : null;
   };
 
+  // {"Match goals 2.5": [[seçenek, açılış oranı, güncel oran, tuttu mu], …], …}
+  const oranAyikla = (oranlar) => {
+    const out = {};
+    for (const m of oranlar?.markets ?? []) {
+      if (m.isLive) continue;
+      out[m.marketName + (m.choiceGroup ? ' ' + m.choiceGroup : '')] =
+        (m.choices ?? []).map((c) => [c.name, oran(c.initialFractionalValue), oran(c.fractionalValue), c.winning ?? null]);
+    }
+    return out;
+  };
+
   // ---------- Supabase ----------
   const SB = { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' };
   // Ağ koparsa (bilgisayar uyudu, internet gitti) vazgeçmeden dakikada bir tekrar dener.
@@ -159,12 +170,7 @@
         p: i.player?.id ?? i.playerIn?.id ?? null, a: i.assist1?.id ?? i.playerOut?.id ?? null,
       }));
 
-    const oranSatir = {};
-    for (const m of oranlar?.markets ?? []) {
-      if (m.isLive) continue;
-      oranSatir[m.marketName + (m.choiceGroup ? ' ' + m.choiceGroup : '')] =
-        (m.choices ?? []).map((c) => [c.name, oran(c.initialFractionalValue), oran(c.fractionalValue), c.winning ?? null]);
-    }
+    const oranSatir = oranAyikla(oranlar);
 
     // Kadrolar ve oyuncular
     const oyuncuSatir = [], yeniOyuncu = new Map(), eksikler = [];
@@ -236,9 +242,15 @@
   // ---------- Fikstür (yaklaşan maçlar) ----------
   const guncelSezon = async (lig) => (await al(`unique-tournament/${lig.id}/seasons`)).seasons
     .filter((s) => /^\d\d\/\d\d$/.test(s.year)).sort((a, b) => sezonYili(b.year) - sezonYili(a.year))[0];
+  // ss_fikstur'da oran sütunu var mı (fikstur.sql'in son iki satırı çalıştırıldı mı)
+  let oranSutunu = null;
   async function fiksturGuncelle() {
     try {
-      let n = 0;
+      if (oranSutunu === null) {
+        oranSutunu = (await agIstek(`${SUPABASE_URL}/rest/v1/ss_fikstur?select=oranlar&limit=1`, { headers: SB })).ok;
+        if (!oranSutunu) console.warn('Yaklaşan maç oranları çekilmeyecek: Supabase\'de scout/supabase/fikstur.sql dosyasının son iki satırını çalıştırın.');
+      }
+      let n = 0, m = 0;
       for (const lig of LIGLER) {
         const sz = await guncelSezon(lig);
         const r = await al(`unique-tournament/${lig.id}/season/${sz.id}/events/next/0`, { yoksaNull: true });
@@ -250,16 +262,24 @@
             const ref = (await al(`event/${e.id}`, { yoksaNull: true }))?.event?.referee;
             if (ref) hakem = { id: ref.id, ad: ref.name };
           }
+          // Gerçek kupon modu için oranlar: 7 gün içindeki, başlamamış maçlar
+          let oranlar = null;
+          if (oranSutunu && e.status?.type === 'notstarted' && e.startTimestamp * 1000 - Date.now() < 7 * 86400000) {
+            const o = oranAyikla(await al(`event/${e.id}/odds/1/all`, { yoksaNull: true }));
+            if (Object.keys(o).length) oranlar = o;
+          }
           satir.push({
             id: e.id, lig_id: lig.id, sezon_id: sz.id, sezon: sz.year, hafta: e.roundInfo?.round ?? null, tarih: tarih(e.startTimestamp),
             ev_id: e.homeTeam.id, ev_ad: e.homeTeam.name, dep_id: e.awayTeam.id, dep_ad: e.awayTeam.name,
             durum: e.status?.type ?? null, hakem, guncellendi: new Date().toISOString(),
+            ...(oranSutunu ? { oranlar, oran_guncellendi: oranlar ? new Date().toISOString() : null } : {}),
           });
         }
         await sbYaz('ss_fikstur', satir, { cakisma: 'id' });
         n += satir.length;
+        m += satir.filter((x) => x.oranlar).length;
       }
-      console.log(`%cFikstür güncellendi: ${n} yaklaşan maç`, 'color:#2563eb');
+      console.log(`%cFikstür güncellendi: ${n} yaklaşan maç${oranSutunu ? ` (${m} maçın oranı alındı)` : ''}`, 'color:#2563eb');
     } catch (e) {
       if (e instanceof Durdur) throw e;
       console.warn('Fikstür güncellenemedi (scout/supabase/fikstur.sql çalıştırıldı mı?):', e.message);
@@ -281,7 +301,7 @@
         const kalan = maclar.filter((m) => !bitenMaclar.has(m.id));
         console.log(`%c${lig.ad} ${sezon.year}: ${maclar.length} bitmiş maç, ${kalan.length} çekilecek`, 'font-weight:bold;color:#2563eb');
         for (const ev of kalan) {
-          if (Date.now() - sonFikstur > 6 * 3600000) { await fiksturGuncelle(); sonFikstur = Date.now(); }
+          if (Date.now() - sonFikstur > 3 * 3600000) { await fiksturGuncelle(); sonFikstur = Date.now(); }
           const s = await macCek(lig, sezon, ev);
           toplam++;
           const dk = Math.round((Date.now() - baslangic) / 60000);
@@ -293,7 +313,21 @@
         }
       }
     }
-    console.log('%cTAMAMLANDI ✅ Tüm ligler ve sezonlar çekildi. Yeni maçlar için ileride tekrar çalıştırabilirsiniz.', 'font-weight:bold;color:#16a34a');
+    console.log('%cTAMAMLANDI ✅ Tüm ligler ve sezonlar çekildi. Sayfa açık kaldıkça takip sürer: 3 saatte bir yeni biten maçlar ve yaklaşan maçların oranları alınır.', 'font-weight:bold;color:#16a34a');
+    // ---------- Takip: yeni biten maçlar + fikstür/oranlar ----------
+    for (;;) {
+      await bekle(Math.max(0, 3 * 3600000 - (Date.now() - sonFikstur)));
+      for (const lig of LIGLER) {
+        const sz = await guncelSezon(lig);
+        const son = (await al(`unique-tournament/${lig.id}/season/${sz.id}/events/last/0`, { yoksaNull: true }))?.events ?? [];
+        for (const ev of son.filter((x) => x.status?.type === 'finished' && !bitenMaclar.has(x.id))) {
+          const s = await macCek(lig, sz, ev);
+          console.log(`✓ (takip) ${ev.homeTeam.name} ${ev.homeScore?.current}-${ev.awayScore?.current} ${ev.awayTeam.name} — ${s.oran} oran`);
+        }
+      }
+      await fiksturGuncelle();
+      sonFikstur = Date.now();
+    }
   } catch (e) {
     if (e instanceof Durdur) console.error(e.message);
     else console.error('Hata — kodu tekrar çalıştırın, kaldığı yerden devam eder:', e);
