@@ -43,3 +43,8 @@ python scout/analiz/pl_analiz.py /tmp/pl veri/scout_pl_analiz.json
 (k-means), maç dinamikleri (ilk gol, devre, kırmızı kart, dakika dağılımı), xG'ye göre beklenen puan (şans tablosu),
 oyuncu özellikleri (nota göre r, büyük/küçük takım oyuncuları Cohen d), oyuncu etkisi (oynadı/oynamadı), gençler, hakemler.
 Yaş eğrisi 10 sezon gelince eklenecek (4 sezonla sonuç gürültülü).
+
+## Tahmin laboratuvarı (`scout/analiz/model_lab.py`)
+Maçtan önce bilinen bilgilerle (güç, form, dinlenme, eksikler, ilk 11, mevcut Dixon-Coles) özellik üretir; modelleri
+ileriye doğru sınar (her test sezonu yalnızca önceki sezonlarla eğitilir) ve bahis piyasasıyla kıyaslar.
+`python scout/analiz/model_lab.py /tmp/pl veri/scout_model_lab.json` — sonuç Analiz sekmesinde "Tahmin laboratuvarı".

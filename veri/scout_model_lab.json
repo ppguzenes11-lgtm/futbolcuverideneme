@@ -1,0 +1,279 @@
+{
+ "olusturuldu": "2026-10-28T16:31+00:00",
+ "bolumler": [
+  {
+   "id": "lab",
+   "baslik": "Tahmin laboratuvarı: en iyi formülü aramak",
+   "ikon": "🧪",
+   "ozet": "1218 maç, her model o maçları HİÇ görmeden (yalnızca önceki sezonlarla eğitilerek) tahmin etti. Sitedeki mevcut model maç sonucunu %53,1 bildi. Yüzlerce özelliği birden kullanan makine öğrenmesi modelleri daha kötü çıktı: az veriyle ezber yapıyorlar. Kazanan yaklaşım, mevcut modelin üstüne yalnızca işe yarayan birkaç bilgiyi eklemek oldu: kadro açıklanmadan %53,5, ilk 11 açıklandıktan sonra %53,6. Bahis piyasası %54,4. İlk 11'li yeni modelin mevcut modelden gerçekten iyi olma olasılığı %96 (eşleştirilmiş bootstrap).",
+   "bloklar": [
+    {
+     "tur": "tablo",
+     "baslik": "Yarışan modeller (görmedikleri maçlarda)",
+     "not": "İsabet: en olası sonucu doğru bilme oranı. Log-kayıp ve Brier olasılıkların kalitesini ölçer; küçük olan iyi. Piyasa yalnızca kıyas içindir.",
+     "sutunlar": [
+      "Model",
+      "İsabet",
+      "Log-kayıp",
+      "Brier"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3
+     ],
+     "satirlar": [
+      [
+       "Mevcut model (Dixon-Coles)",
+       "%53,1",
+       "0,9819",
+       "0,5846"
+      ],
+      [
+       "Tüm özellikler · lojistik regresyon",
+       "%51,6",
+       "1,0046",
+       "0,5982"
+      ],
+      [
+       "Tüm özellikler · gradient boosting",
+       "%52,3",
+       "1,0144",
+       "0,6067"
+      ],
+      [
+       "Yeni model · kadro açıklanmadan",
+       "%53,5",
+       "0,9782",
+       "0,5826"
+      ],
+      [
+       "Yeni model · ilk 11 açıklandıktan sonra",
+       "%53,6",
+       "0,9730",
+       "0,5789"
+      ],
+      [
+       "Bahis piyasası (kıyas)",
+       "%54,4",
+       "0,9655",
+       "0,5736"
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Sezon sezon isabet",
+     "sutunlar": [
+      "Sezon",
+      "Mevcut",
+      "Yeni (kadrosuz)",
+      "Yeni (ilk 11)",
+      "Piyasa",
+      "Maç"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "satirlar": [
+      [
+       "23/24",
+       "%58,2",
+       "%58,9",
+       "%58,7",
+       "%59,5",
+       380
+      ],
+      [
+       "24/25",
+       "%53,4",
+       "%55,0",
+       "%55,0",
+       "%55,5",
+       380
+      ],
+      [
+       "25/26",
+       "%48,4",
+       "%48,7",
+       "%49,2",
+       "%49,5",
+       378
+      ],
+      [
+       "26/27",
+       "%50,0",
+       "%43,8",
+       "%43,8",
+       "%47,5",
+       80
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Model emin olduğunda ne kadar tutuyor?",
+     "not": "Her modelin kendinden en emin olduğu maçlar. Çifte şans (en olası iki sonuçtan biri) isabeti: kadrosuz %80, ilk 11 ile %80, piyasa %80.",
+     "sutunlar": [
+      "Maçlar",
+      "Yeni (kadrosuz)",
+      "Yeni (ilk 11)",
+      "Piyasa",
+      "Maç sayısı"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "satirlar": [
+      [
+       "En emin olunan %100",
+       "%54",
+       "%54",
+       "%54",
+       1218
+      ],
+      [
+       "En emin olunan %50",
+       "%63",
+       "%64",
+       "%65",
+       609
+      ],
+      [
+       "En emin olunan %30",
+       "%68",
+       "%70",
+       "%72",
+       365
+      ],
+      [
+       "En emin olunan %20",
+       "%73",
+       "%75",
+       "%76",
+       244
+      ],
+      [
+       "En emin olunan %10",
+       "%80",
+       "%80",
+       "%80",
+       122
+      ]
+     ]
+    },
+    {
+     "tur": "cubuk",
+     "baslik": "Mevcut modele tek tek eklenen bilgiler ne kazandırdı?",
+     "birim": "",
+     "not": "Log-kayıptaki iyileşme ×1000 (büyük olan iyi). Sıfırın altı: o bilgi tahmini bozdu ya da hiçbir şey katmadı, bu yüzden modele alınmadı.",
+     "aralik": [
+      -3,
+      7.414015468310664
+     ],
+     "ogeler": [
+      {
+       "ad": "Son maçlardaki xG formu",
+       "deger": 7.4,
+       "ton": "pozitif",
+       "alt": "modelde"
+      },
+      {
+       "ad": "İlk 11 hücum tehdidi",
+       "deger": 7.3,
+       "ton": "pozitif",
+       "alt": "modelde"
+      },
+      {
+       "ad": "İlk 11 not ortalaması",
+       "deger": 5.6,
+       "ton": "pozitif",
+       "alt": "modelde"
+      },
+      {
+       "ad": "Elo puanı",
+       "deger": 1.2,
+       "ton": "pozitif",
+       "alt": "alınmadı"
+      },
+      {
+       "ad": "Rotasyon (alışılmış 11'e göre)",
+       "deger": 0.9,
+       "ton": "pozitif",
+       "alt": "alınmadı"
+      },
+      {
+       "ad": "Kalecinin notu",
+       "deger": -0.5,
+       "ton": "negatif",
+       "alt": "alınmadı"
+      },
+      {
+       "ad": "Dinlenme süresi",
+       "deger": -0.6,
+       "ton": "negatif",
+       "alt": "alınmadı"
+      },
+      {
+       "ad": "Eksik/sakat oyuncu kalitesi",
+       "deger": -0.7,
+       "ton": "negatif",
+       "alt": "alınmadı"
+      },
+      {
+       "ad": "İsabetli şut formu",
+       "deger": -1.4,
+       "ton": "negatif",
+       "alt": "alınmadı"
+      },
+      {
+       "ad": "Puan formu",
+       "deger": -2.6,
+       "ton": "negatif",
+       "alt": "alınmadı"
+      }
+     ]
+    },
+    {
+     "tur": "cubuk",
+     "baslik": "Yeni modelde bilgilerin ağırlığı (ev sahibi kazanma yönünde)",
+     "not": "Standartlaştırılmış katsayı farkı; büyük olan sonuca daha çok etki ediyor.",
+     "ogeler": [
+      {
+       "ad": "Son maçlardaki xG formu farkı",
+       "deger": 0.38,
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Mevcut modelin ev/deplasman eğilimi",
+       "deger": 0.38,
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İlk 11'in geçmiş not ortalaması farkı",
+       "deger": 0.32,
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İlk 11'in hücum tehdidi farkı (xG+xA)",
+       "deger": 0.22,
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Mevcut modelin beraberlik olasılığı",
+       "deger": 0.01,
+       "ton": "pozitif"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
