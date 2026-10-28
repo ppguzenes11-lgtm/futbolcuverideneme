@@ -269,3 +269,8 @@ td span.oldu { font-weight: 800; text-decoration: underline; }
 .k-net small { font-weight: 400; font-size: 13px; }
 #k-goster { margin-top: 12px; }
 @media (max-width: 680px) { .k-satir { grid-template-columns: 1fr auto; } .k-sec { grid-column: 1; } .k-oran { grid-row: 1; grid-column: 2; } .k-sonuc { grid-column: 2; grid-row: 2; } .k-alt { grid-template-columns: 1fr 1fr; } }
+.k-pazarlar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 12px; font-size: 13px; }
+.k-cip { display: inline-flex; gap: 5px; align-items: center; background: var(--bg); border: 1px solid var(--cizgi); border-radius: 99px; padding: 5px 10px; cursor: pointer; }
+.k-cip input { min-width: 0; width: auto; padding: 0; margin: 0; }
+.k-arti { color: #15803d; font-weight: 700; } .k-eksi { color: var(--negatif); font-weight: 700; }
+tr.secili-satir td { background: color-mix(in srgb, var(--vurgu) 10%, var(--kart)); }

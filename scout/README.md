@@ -61,8 +61,9 @@ Katsayısı olmayan ligde mevcut model kullanılır. İlk 11'li sürüm, maç ö
 sistem kurulunca eklenecek.
 
 ## Kupon simülatörü (🎲 Kupon sekmesi)
-Geçmiş maçlarda, modelin maçı görmeden ürettiği olasılıklarla kupon kurar ve sonuçları açar; "1.000 kez dene" aynı
-ayarlarla toplu sonuç ve rastgele seçimlerle kıyas verir. Veri: `veri/scout_kupon_gecmis.json`
+Geçmiş maçlarda, modelin maçı görmeden ürettiği olasılıklarla kupon kurar ve sonuçları açar. Pazarlar: maç sonucu,
+çifte şans, ilk yarı, gol çizgileri, karşılıklı gol, korner, kart, ilk gol. "Stratejileri yarıştır" her haftada bir kupon
+kurarak stratejileri (model + oranlar birleşimi, model, değer, rastgele) tutma oranı ve kâr/zararla kıyaslar. Veri: `veri/scout_kupon_gecmis.json`
 ```
 node scout/analiz/pazar_cikar.mjs /tmp/pl /tmp/pl/pazar17.json
 python scout/analiz/kupon_veri.py /tmp/pl/pazar17.json /tmp/pl/takimlar.json /tmp/pl/maclar.json veri/scout_kupon_gecmis.json
