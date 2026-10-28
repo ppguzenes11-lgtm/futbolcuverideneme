@@ -20,6 +20,11 @@
     console.error('Önce https://www.sofascore.com adresini açın, sonra kodu tekrar çalıştırın.');
     return;
   }
+  // Ekranı açık tut: bazı dizüstüler ekran kapanınca uykuya geçip interneti keser.
+  let kilit = null;
+  const ekranKilidi = async () => { try { if (document.visibilityState === 'visible') kilit = await navigator.wakeLock.request('screen'); } catch {} };
+  document.addEventListener('visibilitychange', ekranKilidi);
+  ekranKilidi();
   const deneme = !confirm('Tam çekim için TAMAM, 3 maçlık deneme için İPTAL düğmesine basın.');
 
   const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -36,9 +41,22 @@
 
   // ---------- Supabase ----------
   const SB = { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' };
+  // Ağ koparsa (bilgisayar uyudu, internet gitti) vazgeçmeden dakikada bir tekrar dener.
+  async function agIstek(url, secenek) {
+    for (let deneme = 1; ; deneme++) {
+      try {
+        const r = await fetch(url, secenek);
+        if (r.status >= 500 && deneme < 6) { await bekle(30000 * deneme); continue; }
+        return r;
+      } catch (e) {
+        if (deneme === 1) console.warn('İnternet bağlantısı yok; bağlantı gelene kadar dakikada bir denenecek…');
+        await bekle(60000);
+      }
+    }
+  }
   async function sbYaz(tablo, satirlar, { cakisma, sadeceYeni = false }) {
     if (!satirlar.length) return;
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${tablo}?on_conflict=${cakisma}`, {
+    const r = await agIstek(`${SUPABASE_URL}/rest/v1/${tablo}?on_conflict=${cakisma}`, {
       method: 'POST',
       headers: { ...SB, Prefer: `resolution=${sadeceYeni ? 'ignore' : 'merge'}-duplicates,return=minimal` },
       body: JSON.stringify(satirlar),
@@ -48,7 +66,7 @@
   async function sbOkuHepsi(tablo, sutunlar, filtre = '') {
     const out = [];
     for (let ofs = 0; ; ofs += 1000) {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/${tablo}?select=${sutunlar}${filtre}&order=${sutunlar.split(',')[0]}&limit=1000&offset=${ofs}`, { headers: SB });
+      const r = await agIstek(`${SUPABASE_URL}/rest/v1/${tablo}?select=${sutunlar}${filtre}&order=${sutunlar.split(',')[0]}&limit=1000&offset=${ofs}`, { headers: SB });
       if (!r.ok) throw new Error(`Supabase (${tablo}) ${r.status}: ${await r.text()}`);
       const sayfa = await r.json();
       out.push(...sayfa);
@@ -62,21 +80,13 @@
   async function al(yol, { yoksaNull = false } = {}) {
     for (let deneme = 1; ; deneme++) {
       await bekle(BEKLEME);
-      let r;
-      try {
-        r = await fetch('/api/v1/' + yol);
-      } catch (e) {
-        if (deneme >= 5) throw e;
-        console.warn('Bağlantı hatası, 30 sn sonra tekrar denenecek…');
-        await bekle(30000);
-        continue;
-      }
+      const r = await agIstek('/api/v1/' + yol);
       if (r.ok) return r.json();
       if (r.status === 404) {
         if (yoksaNull) return null;
         throw new Error('404 ' + yol);
       }
-      if ((r.status === 403 || r.status === 429 || r.status >= 500) && deneme < 6) {
+      if ((r.status === 403 || r.status === 429) && deneme < 6) {
         const sn = 60 * deneme;
         console.warn(`SofaScore ${r.status} verdi (çok hızlı istek olabilir). ${sn} sn bekleniyor…`);
         await bekle(sn * 1000);
