@@ -105,8 +105,8 @@ function seciciler() {
   for (const id of ['#stat-alan', '#mevki-alan', '#dk-alan']) $(id).style.display = g === 'siralama' ? '' : 'none';
   $('#ara-alan').style.display = g === 'oyuncular' ? '' : 'none';
   for (const id of ['#ev-alan', '#dep-alan', '#hakem-alan']) $(id).style.display = g === 'tahmin' ? '' : 'none';
-  $('#lig').parentElement.style.display = g === 'oyuncular' || g === 'durum' ? 'none' : '';
-  $('#sezon').parentElement.style.display = g === 'oyuncular' || g === 'durum' || g === 'tahmin' ? 'none' : '';
+  $('#lig').parentElement.style.display = g === 'oyuncular' || g === 'durum' || g === 'analiz' ? 'none' : '';
+  $('#sezon').parentElement.style.display = g === 'oyuncular' || g === 'durum' || g === 'tahmin' || g === 'analiz' ? 'none' : '';
 }
 
 // ---------- Maçlar ----------
@@ -420,6 +420,7 @@ async function goster() {
   if (durum.gorunum === 'siralama') return siralamaGoster();
   if (durum.gorunum === 'oyuncular') return oyuncularGoster();
   if (durum.gorunum === 'tahmin') return tahminGoster();
+  if (durum.gorunum === 'analiz') return analizGoster();
   yenile = setInterval(() => { if (durum.gorunum === 'durum' && !document.hidden) { surum++; durumGoster(); } }, 60000);
   return durumGoster();
 }
@@ -614,4 +615,68 @@ async function macOncesiTahmin(m) {
   if (maclar.filter((x) => new Date(x.tarih).getTime() < simdi).length < 60) return null;
   const model = modelKur(maclar, simdi);
   return { t: model.tahmin(m.ev_id, m.dep_id, { hakemId: m.hakem?.id }), model };
+}
+
+// ---------- Analiz (bilgi tablosu) ----------
+// İçerik scout/analiz/pl_analiz.py ile hesaplanıp veri/scout_pl_analiz.json'a yazılır; burada yalnızca gösterilir.
+let analizVeri = null;
+const sayiBicim = (v) => (typeof v === 'number' ? v.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) : esc(v ?? '–'));
+
+function analizBlok(b) {
+  if (b.tur === 'baslik') return `<h3 class="ara-baslik a-alt">${esc(b.metin)}</h3>`;
+  if (b.tur === 'istatistik') {
+    return `<section class="ozet a-ist">${b.ogeler.map((o) => `<div class="stat"><b>${esc(o.deger)}</b><span>${esc(o.etiket)}</span></div>`).join('')}</section>`;
+  }
+  const bas = `${b.baslik ? `<h3 class="ara-baslik">${esc(b.baslik)}</h3>` : ''}${b.not ? `<p class="not">${esc(b.not)}</p>` : ''}`;
+  if (b.tur === 'tablo') {
+    const say = new Set(b.sayisal || []);
+    return `${bas}<div class="tablo-kaydir"><table><thead><tr>${b.sutunlar.map((c, i) => `<th class="${say.has(i) ? 'sag' : ''}">${esc(c)}</th>`).join('')}</tr></thead>
+      <tbody>${b.satirlar.map((r) => `<tr>${r.map((c, i) => `<td class="${say.has(i) ? 'sag' : ''}">${i === 0 ? `<b>${sayiBicim(c)}</b>` : sayiBicim(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+  if (b.tur === 'cubuk') {
+    const degerler = b.ogeler.map((o) => o.deger ?? 0);
+    const [enAz, enCok] = b.aralik || [Math.min(0, ...degerler), Math.max(...degerler)];
+    const iki = enAz < 0; // iki yönlü (olumlu/olumsuz) çubuk: sıfır ortada
+    const olcek = (v) => (100 * (v - enAz)) / (enCok - enAz || 1);
+    const sifir = iki ? olcek(0) : 0;
+    return `${bas}<ul class="a-cubuklar">${b.ogeler.map((o) => {
+      const v = o.deger ?? 0;
+      const sol = iki ? Math.min(sifir, olcek(v)) : 0;
+      const gen = iki ? Math.abs(olcek(v) - sifir) : olcek(Math.max(v, enAz));
+      return `<li title="${esc(`${o.ad}: ${sayiBicim(v)}${b.birim || ''}${o.alt ? ` · ${o.alt}` : ''}`)}">
+        <div class="cl-ust"><b>${esc(o.ad)}</b><span class="cl-deger">${sayiBicim(v)}${esc(b.birim || '')}</span></div>
+        <div class="a-iz${iki ? ' iki' : ''}" style="--sifir:${sifir}%"><i class="${o.ton === 'negatif' ? 'neg' : ''}" style="left:${sol}%;width:${Math.max(gen, 0.6)}%"></i></div>
+        ${o.alt ? `<small>${esc(o.alt)}</small>` : ''}</li>`;
+    }).join('')}</ul>`;
+  }
+  return '';
+}
+
+async function analizGoster() {
+  const v = surum;
+  yukleniyor();
+  try {
+    analizVeri ||= await fetch('veri/scout_pl_analiz.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  } catch (e) { return guncel(v) && bos(`Analiz yüklenemedi: ${esc(e.message)}`); }
+  if (!guncel(v)) return;
+  const a = analizVeri;
+  $('#ozet').innerHTML = [
+    ['İncelenen maç', sayi(a.mac)], ['Takım-sezon', sayi(a.takim_sezon)], ['Oyuncu-sezon', sayi(a.oyuncu_sezon)],
+    ['Sezonlar', `${esc(a.sezonlar[0])} – ${esc(a.sezonlar[a.sezonlar.length - 1])}`],
+  ].map(([e, d]) => `<div class="stat"><b>${d}</b><span>${e}</span></div>`).join('');
+  $('#icerik').innerHTML = `
+    <p class="not">${esc(a.lig)} bilgi tablosu · ${esc(new Date(a.olusturuldu).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }))} tarihli veriyle hesaplandı.
+      Veri çekimi ilerledikçe (eski sezonlar, diğer ligler) yeniden hesaplanacak.</p>
+    <nav class="a-icindekiler">${a.bolumler.map((b) => `<a href="#a-${b.id}" data-git="a-${b.id}">${b.ikon} ${esc(b.baslik.split(':')[0])}</a>`).join('')}</nav>
+    ${a.bolumler.map((b) => `
+      <section class="kesfet-kart genis a-bolum" id="a-${b.id}">
+        <h2 class="kesfet-baslik">${b.ikon} ${esc(b.baslik)}</h2>
+        <p class="a-sonuc">${esc(b.ozet)}</p>
+        ${b.bloklar.map(analizBlok).join('')}
+      </section>`).join('')}
+    <details class="tablo-gor"><summary>Yöntem</summary><p class="not">${esc(a.yontem)}</p></details>`;
+  $('#icerik').querySelectorAll('[data-git]').forEach((l) => l.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById(l.dataset.git)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
 }

@@ -1,0 +1,2224 @@
+{
+ "olusturuldu": "2026-10-28T16:11+00:00",
+ "lig": "Premier Lig",
+ "sezonlar": [
+  "22/23",
+  "23/24",
+  "24/25",
+  "25/26",
+  "26/27"
+ ],
+ "mac": 1562,
+ "oyuncu_sezon": 1316,
+ "takim_sezon": 80,
+ "yontem": "Takım ölçüleri maç başı ortalamadır; ilişkiler Pearson korelasyonu (r) ile ölçülür ve nedensellik anlamına gelmez. Oyun tarzları standartlaştırılmış tarz ölçülerinde k-ortalamalar kümelemesiyle bulundu. Beklenen puan her maçın xG'sinden Poisson dağılımıyla hesaplandı. Oyuncu ölçüleri 90 dakika başınadır (sezonda en az 900 dakika). \"Not\" SofaScore'un maç notudur ve kendi hesabına göre üretilir.",
+ "bolumler": [
+  {
+   "id": "ozet",
+   "baslik": "Lig özeti",
+   "ikon": "📋",
+   "ozet": "1562 maçta maç başına 2,94 gol atıldı. Ev sahibi galibiyeti oranı %44, deplasman galibiyeti %32; ev sahibi olmak maç başına ortalama 0,37 puan fazladan getiriyor (1,56'ye karşı 1,19).",
+   "bloklar": [
+    {
+     "tur": "istatistik",
+     "ogeler": [
+      {
+       "deger": "1562",
+       "etiket": "İncelenen maç"
+      },
+      {
+       "deger": "2,94",
+       "etiket": "Maç başı gol"
+      },
+      {
+       "deger": "%44",
+       "etiket": "Ev sahibi kazanıyor"
+      },
+      {
+       "deger": "+0,37",
+       "etiket": "Ev avantajı (puan/maç)"
+      }
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Sezon sezon",
+     "sutunlar": [
+      "Sezon",
+      "Maç",
+      "Gol/maç",
+      "Ev",
+      "Ber.",
+      "Dep.",
+      "KG",
+      "2,5 üst",
+      "Korner/maç",
+      "Sarı/maç",
+      "Penaltı golü",
+      "Kırmızı"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "satirlar": [
+      [
+       "22/23",
+       342,
+       2.82,
+       "%48",
+       "%23",
+       "%29",
+       "%51",
+       "%52",
+       10.1,
+       3.7,
+       66,
+       36
+      ],
+      [
+       "23/24",
+       380,
+       3.28,
+       "%46",
+       "%22",
+       "%32",
+       "%62",
+       "%65",
+       10.8,
+       4.4,
+       96,
+       59
+      ],
+      [
+       "24/25",
+       380,
+       2.93,
+       "%41",
+       "%24",
+       "%35",
+       "%57",
+       "%57",
+       10.2,
+       4.2,
+       69,
+       55
+      ],
+      [
+       "25/26",
+       380,
+       2.75,
+       "%43",
+       "%27",
+       "%30",
+       "%56",
+       "%55",
+       10.0,
+       3.8,
+       77,
+       47
+      ],
+      [
+       "26/27 (sürüyor)",
+       80,
+       2.77,
+       "%39",
+       "%29",
+       "%32",
+       "%50",
+       "%50",
+       9.4,
+       4.0,
+       9,
+       14
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "basari",
+   "baslik": "Başarının sırrı: puanla en çok ilişkili takım özellikleri",
+   "ikon": "🏆",
+   "ozet": "80 takım-sezonda her özelliğin maç başı puanla ilişkisi ölçüldü. Beklenen gol farkı (üretilen xG − verilen xG) puanla çok güçlü ilişkili (r = 0,91); tek başına puan farklarını açıklama gücü %83. Daha da önemlisi geleceği gösteriyor: sezonun ilk yarısında en iyi tahminci 'xG farkı (üretilen − verilen)' (r = 0,78); toplanan puanın kendisi ise r = 0,71. Oyun tarzı ölçüleri arasında puanla en güçlü ilişki 'topa sahip olma' (r = 0,71).",
+   "bloklar": [
+    {
+     "tur": "cubuk",
+     "baslik": "Tüm ölçüler: puanla ilişki (r)",
+     "not": "r = 1 kusursuz olumlu ilişki, 0 ilişki yok, −1 kusursuz ters ilişki. Korelasyon nedensellik değildir.",
+     "aralik": [
+      -1,
+      1
+     ],
+     "ogeler": [
+      {
+       "ad": "Üretilen xG (beklenen gol)",
+       "deger": 0.84,
+       "alt": "çok güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İsabetli şut",
+       "deger": 0.83,
+       "alt": "çok güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Şut",
+       "deger": 0.82,
+       "alt": "çok güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Rakip ceza sahasında topla buluşma",
+       "deger": 0.81,
+       "alt": "çok güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Rakibe verilen xG",
+       "deger": -0.8,
+       "alt": "çok güçlü olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Büyük fırsat yaratma",
+       "deger": 0.79,
+       "alt": "güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Rakibin şutu",
+       "deger": -0.75,
+       "alt": "güçlü olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Korner",
+       "deger": 0.72,
+       "alt": "güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Topa sahip olma",
+       "deger": 0.71,
+       "alt": "güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Rakibe verilen büyük fırsat",
+       "deger": -0.68,
+       "alt": "güçlü olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Pas sayısı",
+       "deger": 0.65,
+       "alt": "güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Son üçte bire giriş",
+       "deger": 0.62,
+       "alt": "güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Pas isabeti",
+       "deger": 0.62,
+       "alt": "güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Uzun top payı (pasların içinde)",
+       "deger": -0.61,
+       "alt": "güçlü olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Kaleci kurtarışı",
+       "deger": -0.58,
+       "alt": "orta olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Araya girme",
+       "deger": -0.52,
+       "alt": "orta olumsuz ilişki",
+       "ton": "negatif"
+      }
+     ]
+    },
+    {
+     "tur": "cubuk",
+     "baslik": "Sezonun ilk yarısındaki hangi ölçü ikinci yarının puanını en iyi tahmin ediyor?",
+     "not": "80 takım-sezon. Şansın etkisi az olan ölçüler geleceği daha iyi gösterir.",
+     "aralik": [
+      -1,
+      1
+     ],
+     "ogeler": [
+      {
+       "ad": "xG farkı (üretilen − verilen)",
+       "deger": 0.78,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Şut farkı",
+       "deger": 0.75,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Toplanan puan",
+       "deger": 0.71,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Gol averajı",
+       "deger": 0.7,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Topa sahip olma",
+       "deger": 0.58,
+       "alt": "orta",
+       "ton": "pozitif"
+      }
+     ]
+    },
+    {
+     "tur": "cubuk",
+     "baslik": "Yalnızca oyun tarzı ölçüleri",
+     "not": "Kaliteden çok \"nasıl oynandığını\" anlatan ölçüler.",
+     "aralik": [
+      -1,
+      1
+     ],
+     "ogeler": [
+      {
+       "ad": "Topa sahip olma",
+       "deger": 0.71,
+       "alt": "güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Pas sayısı",
+       "deger": 0.65,
+       "alt": "güçlü olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Uzun top payı (pasların içinde)",
+       "deger": -0.61,
+       "alt": "güçlü olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Araya girme",
+       "deger": -0.52,
+       "alt": "orta olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Top kapma denemesi",
+       "deger": -0.47,
+       "alt": "orta olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Hava topu mücadelesi sayısı",
+       "deger": -0.47,
+       "alt": "orta olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Faul",
+       "deger": -0.41,
+       "alt": "orta olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Pres ölçüsü PPDA (düşük = yoğun pres)",
+       "deger": -0.39,
+       "alt": "zayıf olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Sarı kart",
+       "deger": -0.38,
+       "alt": "zayıf olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Orta denemesi",
+       "deger": 0.32,
+       "alt": "zayıf olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Ceza sahası dışından şut payı",
+       "deger": -0.29,
+       "alt": "zayıf olumsuz ilişki",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Ceza sahası içinden şut payı",
+       "deger": 0.29,
+       "alt": "zayıf olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Sprint sayısı",
+       "deger": 0.2,
+       "alt": "zayıf olumlu ilişki",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Koşu mesafesi (km)",
+       "deger": -0.04,
+       "alt": "yok denecek kadar az olumsuz ilişki",
+       "ton": "negatif"
+      }
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Ortalama profil: şampiyonlar ve küme düşenler nasıl oynuyor?",
+     "not": "Maç başı ortalamalar.",
+     "sutunlar": [
+      "Ölçü",
+      "Şampiyonlar",
+      "İlk 4",
+      "5.–14.",
+      "Küme düşenler"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "satirlar": [
+      [
+       "Topa sahip olma",
+       61.2,
+       57.9,
+       49.8,
+       42.8
+      ],
+      [
+       "Pas isabeti",
+       87.1,
+       85.4,
+       81.0,
+       77.2
+      ],
+      [
+       "Uzun top payı (pasların içinde)",
+       8.2,
+       9.0,
+       12.4,
+       15.3
+      ],
+      [
+       "Şut",
+       16.5,
+       15.8,
+       12.9,
+       10.2
+      ],
+      [
+       "Üretilen xG (beklenen gol)",
+       2.07,
+       1.88,
+       1.47,
+       1.0
+      ],
+      [
+       "Rakibe verilen xG",
+       0.87,
+       1.12,
+       1.45,
+       1.86
+      ],
+      [
+       "Büyük fırsat yaratma",
+       3.5,
+       3.0,
+       2.3,
+       1.5
+      ],
+      [
+       "Pres ölçüsü PPDA (düşük = yoğun pres)",
+       12.39,
+       12.21,
+       12.71,
+       14.09
+      ],
+      [
+       "İkili mücadele kazanma",
+       51.6,
+       50.5,
+       50.1,
+       49.1
+      ],
+      [
+       "Hava topu kazanma",
+       52.4,
+       51.7,
+       50.4,
+       47.9
+      ],
+      [
+       "Orta denemesi",
+       19.0,
+       18.0,
+       18.0,
+       15.9
+      ],
+      [
+       "Faul",
+       9.6,
+       10.1,
+       11.0,
+       11.4
+      ],
+      [
+       "Koşu mesafesi (km)",
+       105.4,
+       105.1,
+       104.7,
+       104.9
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tarz",
+   "baslik": "Oyun tarzları: hangi tarz kazanıyor?",
+   "ikon": "🧭",
+   "ozet": "Takım-sezonlar 7 tarz ölçüsüne göre (topa sahip olma, uzun top payı, orta, pres, uzaktan şut, faul, hava topu) 5 gruba ayrıldı. En başarılı grup 'topa sahip olan, kısa paslı' takımlar: maç başı 1,83 puan, ortalama 5,2. sıra, 4 şampiyonluk.",
+   "bloklar": [
+    {
+     "tur": "tablo",
+     "baslik": "Tarz grupları (en başarılıdan en başarısıza)",
+     "sutunlar": [
+      "Tarz",
+      "Takım-sezon",
+      "Puan/maç",
+      "Ort. sıra",
+      "Şampiyon",
+      "İlk 4",
+      "Küme düşen",
+      "Örnekler"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "satirlar": [
+      [
+       "Topa sahip olan, kısa paslı",
+       23,
+       1.83,
+       5.2,
+       4,
+       12,
+       0,
+       "Manchester City 22/23, Manchester City 23/24, Arsenal 23/24 … Tottenham Hotspur 24/25"
+      ],
+      [
+       "Ortayı az kullanan, yerden oynayan",
+       22,
+       1.34,
+       10.6,
+       0,
+       4,
+       2,
+       "Manchester United 22/23, Manchester United 25/26, Chelsea 24/25 … Southampton 24/25"
+      ],
+      [
+       "Fiziksel / hava topu ağırlıklı, ceza sahasına kadar giren",
+       11,
+       1.27,
+       12.2,
+       0,
+       0,
+       1,
+       "Brentford 24/25, Brentford 22/23, Sunderland 25/26 … West Ham United 25/26"
+      ],
+      [
+       "Kanattan ortalı, sert (bol faullü)",
+       10,
+       1.16,
+       13.3,
+       0,
+       0,
+       2,
+       "Bournemouth 25/26, Bournemouth 24/25, Fulham 22/23 … Wolverhampton 25/26"
+      ],
+      [
+       "Topu rakibe bırakan, uzun toplu",
+       14,
+       0.96,
+       15.7,
+       0,
+       0,
+       7,
+       "Nottingham Forest 24/25, Crystal Palace 24/25, Crystal Palace 23/24 … Sheffield United 23/24"
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Grupların tarz profili",
+     "not": "0 = lig ortalaması; +1 ortalamanın bir standart sapma üstü, −1 altı.",
+     "sutunlar": [
+      "Tarz",
+      "Topa sahip",
+      "Uzun top",
+      "Orta",
+      "PPDA (düşük=pres)",
+      "Uzaktan şut",
+      "Faul",
+      "Hava topu"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "satirlar": [
+      [
+       "Topa sahip olan, kısa paslı",
+       1.2,
+       -1.1,
+       0.6,
+       -0.6,
+       -0.6,
+       -0.5,
+       -0.9
+      ],
+      [
+       "Ortayı az kullanan, yerden oynayan",
+       0.2,
+       -0.3,
+       -0.5,
+       -0.4,
+       0.3,
+       0.3,
+       -0.4
+      ],
+      [
+       "Fiziksel / hava topu ağırlıklı, ceza sahasına kadar giren",
+       -0.8,
+       0.9,
+       -0.2,
+       0.9,
+       -1.2,
+       -0.6,
+       1.3
+      ],
+      [
+       "Kanattan ortalı, sert (bol faullü)",
+       -0.5,
+       0.8,
+       1.3,
+       -0.2,
+       0.6,
+       1.0,
+       0.8
+      ],
+      [
+       "Topu rakibe bırakan, uzun toplu",
+       -1.2,
+       1.1,
+       -0.8,
+       1.0,
+       0.9,
+       0.2,
+       0.6
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "dinamik",
+   "baslik": "Maç dinamikleri: ilk gol, devre, kırmızı kart, uzatmalar",
+   "ikon": "⏱️",
+   "ozet": "İlk golü atan takımın kazanma oranı %65, kaybetme oranı sadece %15. Devreyi önde kapatanların kazanma oranı %72. İlginç bir sonuç: topa daha çok sahip olan takımın kazanma oranı yalnızca %41; xG'de yarım golden fazla üstün olanınki ise %67 — topa sahip olmak değil, pozisyon üretmek belirleyici. Son 15 dakika ve uzatmalarda atılan gollerin payı %23.",
+   "bloklar": [
+    {
+     "tur": "tablo",
+     "baslik": "Şu durumda olan takım maçı nasıl bitiriyor?",
+     "sutunlar": [
+      "Durum",
+      "Kazanır",
+      "Berabere",
+      "Kaybeder",
+      "Maç"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "satirlar": [
+      [
+       "İlk golü attı",
+       "%65",
+       "%20",
+       "%15",
+       1480
+      ],
+      [
+       "İlk golü ev sahibi attı",
+       "%70",
+       "%19",
+       "%12",
+       807
+      ],
+      [
+       "İlk golü deplasman attı",
+       "%59",
+       "%22",
+       "%19",
+       673
+      ],
+      [
+       "Devreyi önde kapattı",
+       "%72",
+       "%18",
+       "%10",
+       959
+      ],
+      [
+       "Kırmızı kart gördü (rakip görmedi)",
+       "%20",
+       "%23",
+       "%57",
+       174
+      ],
+      [
+       "İlk yarıda kırmızı kart gördü",
+       "%21",
+       "%21",
+       "%59",
+       68
+      ],
+      [
+       "Topa daha çok sahip oldu",
+       "%41",
+       "%25",
+       "%34",
+       1514
+      ],
+      [
+       "Daha çok şut attı",
+       "%49",
+       "%24",
+       "%27",
+       1505
+      ],
+      [
+       "xG'de 0,5+ üstün",
+       "%67",
+       "%20",
+       "%13",
+       1051
+      ]
+     ]
+    },
+    {
+     "tur": "cubuk",
+     "baslik": "Goller hangi dakikalarda geliyor?",
+     "birim": "%",
+     "ogeler": [
+      {
+       "ad": "1–15",
+       "deger": 12.8,
+       "alt": "587 gol"
+      },
+      {
+       "ad": "16–30",
+       "deger": 13.5,
+       "alt": "621 gol"
+      },
+      {
+       "ad": "31–45+",
+       "deger": 17.7,
+       "alt": "814 gol"
+      },
+      {
+       "ad": "46–60",
+       "deger": 16.0,
+       "alt": "734 gol"
+      },
+      {
+       "ad": "61–75",
+       "deger": 16.7,
+       "alt": "765 gol"
+      },
+      {
+       "ad": "76–90",
+       "deger": 15.9,
+       "alt": "729 gol"
+      },
+      {
+       "ad": "90+",
+       "deger": 7.4,
+       "alt": "342 gol"
+      }
+     ]
+    },
+    {
+     "tur": "istatistik",
+     "ogeler": [
+      {
+       "deger": "%83",
+       "etiket": "Penaltı başarısı (317 gol, 64 kaçan)"
+      },
+      {
+       "deger": "%13",
+       "etiket": "Yedekten girenlerin gol payı (sahadaki süre payları %8)"
+      },
+      {
+       "deger": "%7,4",
+       "etiket": "Uzatma dakikası golleri"
+      },
+      {
+       "deger": "%15",
+       "etiket": "İlk golü atıp kaybedenler"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sans",
+   "baslik": "Şans tablosu: hak ettiğinden fazla ya da az puan alanlar",
+   "ikon": "🎲",
+   "ozet": "Her maçın xG'sinden 'beklenen puan' hesaplandı. Beklenen puan gerçek puanla çok güçlü ilişkili (r = 0,91); aradaki fark çoğunlukla şans, bitiricilik ya da kaleci performansı. En şanslı sezon: Aston Villa 25/26 (+16 puan); en şanssız: Wolverhampton 25/26 (-19 puan).",
+   "bloklar": [
+    {
+     "tur": "tablo",
+     "baslik": "Beklenenden en fazla puan toplayanlar",
+     "sutunlar": [
+      "Takım",
+      "Puan",
+      "Beklenen",
+      "Fark",
+      "Sıra"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "satirlar": [
+      [
+       "Aston Villa 25/26",
+       65,
+       48.9,
+       "+16,1",
+       4
+      ],
+      [
+       "Nottingham Forest 24/25",
+       65,
+       50.2,
+       "+14,8",
+       7
+      ],
+      [
+       "Manchester United 23/24",
+       60,
+       45.7,
+       "+14,3",
+       8
+      ],
+      [
+       "Arsenal 22/23",
+       78,
+       64.4,
+       "+13,6",
+       2
+      ],
+      [
+       "Manchester City 23/24",
+       91,
+       77.6,
+       "+13,4",
+       1
+      ],
+      [
+       "Aston Villa 23/24",
+       68,
+       55.1,
+       "+12,9",
+       4
+      ],
+      [
+       "Sunderland 25/26",
+       54,
+       42.6,
+       "+11,4",
+       7
+      ],
+      [
+       "Manchester United 22/23",
+       63,
+       52.5,
+       "+10,5",
+       4
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Beklenenden en az puan toplayanlar",
+     "sutunlar": [
+      "Takım",
+      "Puan",
+      "Beklenen",
+      "Fark",
+      "Sıra"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "satirlar": [
+      [
+       "Wolverhampton 25/26",
+       20,
+       39.0,
+       "-19,0",
+       20
+      ],
+      [
+       "Sheffield United 23/24",
+       16,
+       32.2,
+       "-16,2",
+       20
+      ],
+      [
+       "Nottingham Forest 23/24",
+       36,
+       50.6,
+       "-14,6",
+       17
+      ],
+      [
+       "Southampton 24/25",
+       12,
+       26.0,
+       "-14,0",
+       20
+      ],
+      [
+       "Brentford 23/24",
+       39,
+       52.7,
+       "-13,7",
+       16
+      ],
+      [
+       "West Ham United 22/23",
+       34,
+       47.1,
+       "-13,1",
+       15
+      ],
+      [
+       "Tottenham Hotspur 24/25",
+       38,
+       50.5,
+       "-12,5",
+       17
+      ],
+      [
+       "Burnley 23/24",
+       24,
+       36.0,
+       "-12,0",
+       19
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Bu sezon (26/27) — xG'ye göre gerçek puan tablosu",
+     "not": "Beklenen puanı gerçek puanından yüksek olanların ileride toparlanması beklenir.",
+     "sutunlar": [
+      "Takım",
+      "Puan",
+      "Beklenen",
+      "Fark",
+      "Sıra"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "satirlar": [
+      [
+       "Arsenal 26/27",
+       21,
+       16.2,
+       "+4,8",
+       2
+      ],
+      [
+       "Manchester City 26/27",
+       21,
+       14.9,
+       "+6,1",
+       1
+      ],
+      [
+       "Nottingham Forest 26/27",
+       6,
+       13.9,
+       "-7,9",
+       18
+      ],
+      [
+       "Brighton & Hove Albion 26/27",
+       16,
+       13.7,
+       "+2,3",
+       3
+      ],
+      [
+       "Bournemouth 26/27",
+       9,
+       13.4,
+       "-4,4",
+       13
+      ],
+      [
+       "Liverpool FC 26/27",
+       15,
+       12.6,
+       "+2,4",
+       4
+      ],
+      [
+       "Fulham 26/27",
+       8,
+       11.4,
+       "-3,4",
+       15
+      ],
+      [
+       "Brentford 26/27",
+       11,
+       11.4,
+       "-0,4",
+       6
+      ],
+      [
+       "Leeds United 26/27",
+       11,
+       11.0,
+       "+0,0",
+       7
+      ],
+      [
+       "Tottenham Hotspur 26/27",
+       9,
+       10.7,
+       "-1,7",
+       14
+      ],
+      [
+       "Manchester United 26/27",
+       7,
+       10.7,
+       "-3,7",
+       16
+      ],
+      [
+       "Chelsea 26/27",
+       13,
+       10.3,
+       "+2,7",
+       5
+      ],
+      [
+       "Everton 26/27",
+       10,
+       9.9,
+       "+0,1",
+       11
+      ],
+      [
+       "Sunderland 26/27",
+       5,
+       9.8,
+       "-4,8",
+       20
+      ],
+      [
+       "Aston Villa 26/27",
+       11,
+       9.4,
+       "+1,6",
+       9
+      ],
+      [
+       "Ipswich Town 26/27",
+       10,
+       9.0,
+       "+1,0",
+       12
+      ],
+      [
+       "Crystal Palace 26/27",
+       7,
+       8.4,
+       "-1,4",
+       17
+      ],
+      [
+       "Coventry City 26/27",
+       6,
+       8.3,
+       "-2,3",
+       19
+      ],
+      [
+       "Hull City 26/27",
+       10,
+       8.3,
+       "+1,7",
+       10
+      ],
+      [
+       "Newcastle United 26/27",
+       11,
+       8.1,
+       "+2,9",
+       8
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "oyuncu",
+   "baslik": "Oyuncular: başarılı oyuncunun ortak özellikleri",
+   "ikon": "⭐",
+   "ozet": "1316 oyuncu-sezon (sezonda en az 900 dakika) incelendi. Yüksek not alan forvet ve orta sahaları en çok ayıran şey gol değil, pozisyon hazırlamak (xA (beklenen asist), kilit pas). Büyük takımların oyuncularını alt sıradakilerden en çok ayıran özellik forvette 'şut', orta sahada 'xA (beklenen asist)', defansta 'topla buluşma'.",
+   "bloklar": [
+    {
+     "tur": "cubuk",
+     "baslik": "Forvet (243 oyuncu-sezon): yüksek not alanlar neyi daha çok yapıyor?",
+     "aralik": [
+      -1,
+      1
+     ],
+     "ogeler": [
+      {
+       "ad": "xA (beklenen asist)",
+       "deger": 0.62,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Kilit pas",
+       "deger": 0.62,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Asist",
+       "deger": 0.56,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Büyük fırsat yaratma",
+       "deger": 0.55,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İsabetli pas",
+       "deger": 0.52,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Topla buluşma",
+       "deger": 0.5,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İleri top taşıma",
+       "deger": -0.22,
+       "alt": "zayıf",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Faul yapma",
+       "deger": -0.24,
+       "alt": "zayıf",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Uzaklaştırma",
+       "deger": -0.31,
+       "alt": "zayıf",
+       "ton": "negatif"
+      }
+     ]
+    },
+    {
+     "tur": "cubuk",
+     "baslik": "Orta saha (497 oyuncu-sezon): yüksek not alanlar neyi daha çok yapıyor?",
+     "aralik": [
+      -1,
+      1
+     ],
+     "ogeler": [
+      {
+       "ad": "xA (beklenen asist)",
+       "deger": 0.63,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Kilit pas",
+       "deger": 0.61,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Büyük fırsat yaratma",
+       "deger": 0.56,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Asist",
+       "deger": 0.54,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Topla buluşma",
+       "deger": 0.49,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Gol",
+       "deger": 0.46,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Araya girme",
+       "deger": -0.12,
+       "alt": "yok denecek kadar az",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Uzaklaştırma",
+       "deger": -0.19,
+       "alt": "yok denecek kadar az",
+       "ton": "negatif"
+      },
+      {
+       "ad": "Faul yapma",
+       "deger": -0.2,
+       "alt": "yok denecek kadar az",
+       "ton": "negatif"
+      }
+     ]
+    },
+    {
+     "tur": "cubuk",
+     "baslik": "Defans (476 oyuncu-sezon): yüksek not alanlar neyi daha çok yapıyor?",
+     "aralik": [
+      -1,
+      1
+     ],
+     "ogeler": [
+      {
+       "ad": "Topla buluşma",
+       "deger": 0.55,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İsabetli pas",
+       "deger": 0.48,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İsabetli uzun top",
+       "deger": 0.42,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İkili mücadele %",
+       "deger": 0.39,
+       "alt": "zayıf",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Hava topu %",
+       "deger": 0.35,
+       "alt": "zayıf",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Şut",
+       "deger": 0.35,
+       "alt": "zayıf",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "İleri top taşıma",
+       "deger": -0.15,
+       "alt": "yok denecek kadar az",
+       "ton": "negatif"
+      }
+     ]
+    },
+    {
+     "tur": "cubuk",
+     "baslik": "Kaleci (100 oyuncu-sezon): yüksek not alanlar neyi daha çok yapıyor?",
+     "aralik": [
+      -1,
+      1
+     ],
+     "ogeler": [
+      {
+       "ad": "Önlenen gol (xG'ye göre)",
+       "deger": 0.7,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Kurtarış",
+       "deger": 0.64,
+       "alt": "güçlü",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Kilit pas",
+       "deger": 0.48,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Topla buluşma",
+       "deger": 0.47,
+       "alt": "orta",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Top kazanma",
+       "deger": 0.37,
+       "alt": "zayıf",
+       "ton": "pozitif"
+      },
+      {
+       "ad": "Büyük fırsat yaratma",
+       "deger": 0.37,
+       "alt": "zayıf",
+       "ton": "pozitif"
+      }
+     ]
+    },
+    {
+     "tur": "baslik",
+     "metin": "Büyük takımların oyuncuları neyi farklı yapıyor?"
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Forvet: ilk 4 takımın oyuncuları ile alt sıradakilerinki (90 dakikada)",
+     "not": "Etki büyüklüğü (Cohen d): 0,2 küçük, 0,5 orta, 0,8 büyük fark. Pozitif = büyük takımların oyuncuları daha çok yapıyor.",
+     "sutunlar": [
+      "Özellik",
+      "İlk 4",
+      "15.–20.",
+      "Etki"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3
+     ],
+     "satirlar": [
+      [
+       "Şut",
+       2.92,
+       2.17,
+       "+1,13"
+      ],
+      [
+       "Uzaklaştırma",
+       0.5,
+       0.91,
+       "-0,95"
+      ],
+      [
+       "Gol",
+       0.45,
+       0.27,
+       "+0,88"
+      ],
+      [
+       "Asist",
+       0.22,
+       0.12,
+       "+0,84"
+      ],
+      [
+       "xA (beklenen asist)",
+       0.15,
+       0.09,
+       "+0,84"
+      ],
+      [
+       "Pas isabeti %",
+       78.37,
+       72.77,
+       "+0,81"
+      ],
+      [
+       "xG",
+       0.44,
+       0.3,
+       "+0,79"
+      ],
+      [
+       "Kilit pas",
+       1.48,
+       1.06,
+       "+0,72"
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Orta saha: ilk 4 takımın oyuncuları ile alt sıradakilerinki (90 dakikada)",
+     "not": "Etki büyüklüğü (Cohen d): 0,2 küçük, 0,5 orta, 0,8 büyük fark. Pozitif = büyük takımların oyuncuları daha çok yapıyor.",
+     "sutunlar": [
+      "Özellik",
+      "İlk 4",
+      "15.–20.",
+      "Etki"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3
+     ],
+     "satirlar": [
+      [
+       "xA (beklenen asist)",
+       0.17,
+       0.09,
+       "+1,08"
+      ],
+      [
+       "Kilit pas",
+       1.65,
+       1.01,
+       "+0,94"
+      ],
+      [
+       "İsabetli pas",
+       43.65,
+       31.66,
+       "+0,92"
+      ],
+      [
+       "Şut",
+       1.79,
+       1.1,
+       "+0,91"
+      ],
+      [
+       "Topla buluşma",
+       67.78,
+       56.54,
+       "+0,88"
+      ],
+      [
+       "Gol",
+       0.2,
+       0.09,
+       "+0,87"
+      ],
+      [
+       "xG",
+       0.18,
+       0.09,
+       "+0,86"
+      ],
+      [
+       "Pas isabeti %",
+       85.72,
+       81.8,
+       "+0,82"
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Defans: ilk 4 takımın oyuncuları ile alt sıradakilerinki (90 dakikada)",
+     "not": "Etki büyüklüğü (Cohen d): 0,2 küçük, 0,5 orta, 0,8 büyük fark. Pozitif = büyük takımların oyuncuları daha çok yapıyor.",
+     "sutunlar": [
+      "Özellik",
+      "İlk 4",
+      "15.–20.",
+      "Etki"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3
+     ],
+     "satirlar": [
+      [
+       "Topla buluşma",
+       77.01,
+       61.66,
+       "+1,45"
+      ],
+      [
+       "İsabetli pas",
+       53.98,
+       36.25,
+       "+1,41"
+      ],
+      [
+       "Pas isabeti %",
+       88.42,
+       81.55,
+       "+1,33"
+      ],
+      [
+       "Uzaklaştırma",
+       2.93,
+       3.94,
+       "-0,73"
+      ],
+      [
+       "Araya girme",
+       0.93,
+       1.15,
+       "-0,58"
+      ],
+      [
+       "xA (beklenen asist)",
+       0.07,
+       0.04,
+       "+0,50"
+      ],
+      [
+       "xG",
+       0.07,
+       0.05,
+       "+0,44"
+      ],
+      [
+       "Şut",
+       0.67,
+       0.53,
+       "+0,41"
+      ]
+     ]
+    },
+    {
+     "tur": "tablo",
+     "baslik": "Mevkiye göre boy ve ayak",
+     "not": "Defanslarda boy ile hava topu başarısı arasında orta ilişki var (r = 0,44), ama boy ile genel not arasında neredeyse yok (r = 0,08).",
+     "sutunlar": [
+      "Mevki",
+      "Ort. boy (cm)",
+      "Solak oranı",
+      "Oyuncu-sezon"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3
+     ],
+     "satirlar": [
+      [
+       "Kaleci",
+       191.4,
+       "%11",
+       100
+      ],
+      [
+       "Defans",
+       185.2,
+       "%36",
+       476
+      ],
+      [
+       "Orta saha",
+       180.5,
+       "%26",
+       497
+      ],
+      [
+       "Forvet",
+       182.1,
+       "%18",
+       243
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "etki",
+   "baslik": "Takımı kazandıran oyuncular",
+   "ikon": "💪",
+   "ozet": "Her oyuncunun takımı, onun ilk 11'de en az 60 dakika oynadığı maçlarda ve hiç oynamadığı maçlarda karşılaştırıldı. Fark az maça dayanıyorsa sıfıra doğru küçültülerek sıralandı. Listenin başında Nico O'Reilly var: o oynarken Manchester City maç başı 2,54, o yokken 1,57 puan topluyor. Not: rakip gücü ve sakatlık dönemleri de farka karışır.",
+   "bloklar": [
+    {
+     "tur": "tablo",
+     "baslik": "En büyük olumlu etki",
+     "sutunlar": [
+      "Oyuncu",
+      "Takım",
+      "Puan/maç (oynadı)",
+      "Puan/maç (yoktu)",
+      "Maç (oynadı/yoktu)",
+      "Puan farkı",
+      "Averaj farkı"
+     ],
+     "sayisal": [
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "satirlar": [
+      [
+       "Nico O'Reilly",
+       "Manchester City",
+       2.54,
+       1.57,
+       "37 / 35",
+       "+0,97",
+       "+1,31"
+      ],
+      [
+       "Valentín Castellanos",
+       "West Ham United",
+       1.56,
+       0.7,
+       "16 / 20",
+       "+0,86",
+       "+1,31"
+      ],
+      [
+       "José Sá",
+       "Wolverhampton",
+       1.15,
+       0.37,
+       "120 / 27",
+       "+0,78",
+       "+0,95"
+      ],
+      [
+       "Abdoulaye Doucouré",
+       "Everton",
+       1.32,
+       0.54,
+       "71 / 24",
+       "+0,78",
+       "+0,68"
+      ],
+      [
+       "Bruno Fernandes",
+       "Manchester United",
+       1.68,
+       0.6,
+       "141 / 10",
+       "+1,08",
+       "+1,43"
+      ],
+      [
+       "Bryan Mbeumo",
+       "Brentford",
+       1.55,
+       0.72,
+       "130 / 18",
+       "+0,82",
+       "+1,06"
+      ],
+      [
+       "Bruno Guimarães",
+       "Newcastle United",
+       1.74,
+       0.94,
+       "129 / 18",
+       "+0,80",
+       "+1,09"
+      ],
+      [
+       "Jack Grealish",
+       "Manchester City",
+       2.25,
+       1.66,
+       "60 / 64",
+       "+0,59",
+       "+0,43"
+      ],
+      [
+       "Jacob Murphy",
+       "Newcastle United",
+       1.97,
+       1.27,
+       "71 / 26",
+       "+0,70",
+       "+0,92"
+      ],
+      [
+       "Yasin Ayari",
+       "Brighton & Hove Albion",
+       1.7,
+       0.86,
+       "47 / 14",
+       "+0,84",
+       "+1,68"
+      ],
+      [
+       "Richarlison",
+       "Tottenham Hotspur",
+       1.75,
+       1.18,
+       "48 / 50",
+       "+0,57",
+       "+0,29"
+      ],
+      [
+       "Adam Webster",
+       "Brighton & Hove Albion",
+       1.81,
+       1.26,
+       "42 / 54",
+       "+0,55",
+       "+0,91"
+      ],
+      [
+       "Pablo Sarabia",
+       "Wolverhampton",
+       1.45,
+       0.89,
+       "31 / 46",
+       "+0,56",
+       "+0,74"
+      ],
+      [
+       "Hugo Ekitiké",
+       "Liverpool FC",
+       2.21,
+       1.3,
+       "19 / 10",
+       "+0,91",
+       "+0,79"
+      ],
+      [
+       "Toti Gomes",
+       "Wolverhampton",
+       1.19,
+       0.64,
+       "81 / 50",
+       "+0,55",
+       "+0,54"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "genc",
+   "baslik": "Genç yetenekler (sezon başında 21 yaş ve altı)",
+   "ikon": "🌱",
+   "ozet": "Son sezonlarda en az 900 dakika oynayan 64 genç oyuncu, en iyi sezonlarındaki ortalama notlarına göre sıralandı. Güçlü yanlar, aynı sezon aynı mevkideki tüm oyuncular içindeki yüzdelik dilimle verildi (%90 = mevkisindekilerin %90'ından iyi).",
+   "bloklar": [
+    {
+     "tur": "tablo",
+     "baslik": "En yüksek notlu gençler",
+     "sutunlar": [
+      "Oyuncu",
+      "Sezon",
+      "Takım",
+      "Mevki",
+      "Yaş",
+      "Dakika",
+      "Ort. not",
+      "Güçlü yanları"
+     ],
+     "sayisal": [
+      4,
+      5,
+      6
+     ],
+     "satirlar": [
+      [
+       "Sávio",
+       "24/25",
+       "Manchester City",
+       "Orta saha",
+       20,
+       1770,
+       7.45,
+       "xA (beklenen asist) (%98), Başarılı çalım (%97)"
+      ],
+      [
+       "Rayan Cherki",
+       "25/26",
+       "Manchester City",
+       "Orta saha",
+       21,
+       1884,
+       7.33,
+       "xA (beklenen asist) (%99), Büyük fırsat yaratma (%99)"
+      ],
+      [
+       "Dean Huijsen",
+       "24/25",
+       "Bournemouth",
+       "Defans",
+       19,
+       2422,
+       7.28,
+       "Uzaklaştırma (%97), Araya girme (%97)"
+      ],
+      [
+       "Lewis Hall",
+       "24/25",
+       "Newcastle United",
+       "Defans",
+       19,
+       2192,
+       7.27,
+       "İsabetli orta (%94), Asist (%94)"
+      ],
+      [
+       "Mateus Fernandes",
+       "25/26",
+       "West Ham United",
+       "Orta saha",
+       21,
+       3024,
+       7.2,
+       "İsabetli uzun top (%95), Başarılı top kapma (%93)"
+      ],
+      [
+       "Patrick Dorgu",
+       "25/26",
+       "Manchester United",
+       "Orta saha",
+       20,
+       1461,
+       7.12,
+       "Kazanılan ikili mücadele (%99), Faul kazanma (%96)"
+      ],
+      [
+       "Alex Scott",
+       "25/26",
+       "Bournemouth",
+       "Orta saha",
+       21,
+       2859,
+       7.12,
+       "Top kazanma (%93), Uzaklaştırma (%91)"
+      ],
+      [
+       "Adam Wharton",
+       "25/26",
+       "Crystal Palace",
+       "Orta saha",
+       21,
+       2562,
+       7.1,
+       "xA (beklenen asist) (%97), Top kazanma (%91)"
+      ],
+      [
+       "Ethan Nwaneri",
+       "24/25",
+       "Arsenal",
+       "Orta saha",
+       17,
+       946,
+       7.09,
+       "Başarılı çalım (%99), İleri top taşıma (%95)"
+      ],
+      [
+       "Miloš Kerkez",
+       "24/25",
+       "Bournemouth",
+       "Defans",
+       20,
+       3432,
+       7.06,
+       "Faul kazanma (%93), İsabetli orta (%90)"
+      ],
+      [
+       "Yankuba Minteh",
+       "24/25",
+       "Brighton & Hove Albion",
+       "Orta saha",
+       20,
+       1854,
+       7.05,
+       "İleri top taşıma (%99), Başarılı çalım (%95)"
+      ],
+      [
+       "Carlos Baleba",
+       "24/25",
+       "Brighton & Hove Albion",
+       "Orta saha",
+       20,
+       2670,
+       7.03,
+       "Top kazanma (%95), Araya girme (%95)"
+      ],
+      [
+       "Elliot Anderson",
+       "24/25",
+       "Nottingham Forest",
+       "Orta saha",
+       21,
+       2811,
+       7.03,
+       "Top kazanma (%97), Kazanılan ikili mücadele (%97)"
+      ],
+      [
+       "Kobbie Mainoo",
+       "25/26",
+       "Manchester United",
+       "Orta saha",
+       20,
+       1670,
+       7.03,
+       "İsabetli pas (%89), Topla buluşma (%88)"
+      ],
+      [
+       "Rayan",
+       "25/26",
+       "Bournemouth",
+       "Orta saha",
+       18,
+       1119,
+       7.01,
+       "Gol (%97), İleri top taşıma (%96)"
+      ],
+      [
+       "Lewis Miley",
+       "25/26",
+       "Newcastle United",
+       "Orta saha",
+       19,
+       1494,
+       7.01,
+       "İkili mücadele % (%99), Hava topu % (%98)"
+      ],
+      [
+       "Ayden Heaven",
+       "25/26",
+       "Manchester United",
+       "Defans",
+       18,
+       938,
+       7.01,
+       "İkili mücadele % (%97), Pas isabeti % (%91)"
+      ],
+      [
+       "Mateus Mané",
+       "25/26",
+       "Wolverhampton",
+       "Forvet",
+       17,
+       1799,
+       7.0,
+       "Faul kazanma (%98), İsabetli orta (%97)"
+      ],
+      [
+       "Yasin Ayari",
+       "24/25",
+       "Brighton & Hove Albion",
+       "Orta saha",
+       20,
+       1990,
+       7.0,
+       "İsabetli orta (%81), Top kazanma (%74)"
+      ],
+      [
+       "Abdukodir Khusanov",
+       "25/26",
+       "Manchester City",
+       "Defans",
+       21,
+       1429,
+       6.98,
+       "Araya girme (%98), İsabetli pas (%95)"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hakem",
+   "baslik": "Hakemler",
+   "ikon": "🟨",
+   "ozet": "Ligde maç başı ortalama 4,04 sarı kart çıkıyor. En çok kart gösteren John Brooks (4,48), en az gösteren Andy Madley (3,64). Bu fark, kart tahmininde hakemin neden önemli olduğunu gösteriyor.",
+   "bloklar": [
+    {
+     "tur": "tablo",
+     "baslik": "En az 15 maç yöneten hakemler (en kartlıdan en az kartlıya)",
+     "not": "Dep./ev kart oranı 1'den büyükse deplasman takımı daha çok kart görüyor.",
+     "sutunlar": [
+      "Hakem",
+      "Maç",
+      "Sarı/maç",
+      "Kırmızı/maç",
+      "Penaltı/maç",
+      "Ev kazanıyor",
+      "Dep./ev kart"
+     ],
+     "sayisal": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "satirlar": [
+      [
+       "John Brooks",
+       73,
+       4.48,
+       0.16,
+       0.33,
+       "%51",
+       0.91
+      ],
+      [
+       "David Coote",
+       41,
+       4.37,
+       0.15,
+       0.29,
+       "%49",
+       1.24
+      ],
+      [
+       "Robert Jones",
+       89,
+       4.29,
+       0.13,
+       0.3,
+       "%51",
+       1.29
+      ],
+      [
+       "Tim Robinson",
+       48,
+       4.29,
+       0.08,
+       0.23,
+       "%48",
+       1.26
+      ],
+      [
+       "Darren England",
+       76,
+       4.26,
+       0.16,
+       0.2,
+       "%43",
+       1.33
+      ],
+      [
+       "Stuart Attwell",
+       89,
+       4.26,
+       0.18,
+       0.2,
+       "%45",
+       1.17
+      ],
+      [
+       "Chris Kavanagh",
+       91,
+       4.25,
+       0.19,
+       0.25,
+       "%40",
+       1.2
+      ],
+      [
+       "Peter Bankes",
+       78,
+       4.23,
+       0.13,
+       0.18,
+       "%56",
+       1.2
+      ],
+      [
+       "Simon Hooper",
+       89,
+       4.22,
+       0.08,
+       0.12,
+       "%51",
+       1.31
+      ],
+      [
+       "Darren Bond",
+       23,
+       4.22,
+       0.17,
+       0.3,
+       "%52",
+       1.26
+      ],
+      [
+       "Michael Salisbury",
+       59,
+       3.97,
+       0.17,
+       0.37,
+       "%49",
+       1.09
+      ],
+      [
+       "Thomas Bramall",
+       55,
+       3.96,
+       0.18,
+       0.31,
+       "%47",
+       1.34
+      ],
+      [
+       "Jarred Gillett",
+       80,
+       3.95,
+       0.06,
+       0.26,
+       "%32",
+       0.9
+      ],
+      [
+       "Anthony Taylor",
+       116,
+       3.95,
+       0.17,
+       0.29,
+       "%35",
+       1.14
+      ],
+      [
+       "Craig Pawson",
+       86,
+       3.94,
+       0.12,
+       0.3,
+       "%38",
+       1.22
+      ],
+      [
+       "Samuel Barrott",
+       67,
+       3.87,
+       0.04,
+       0.24,
+       "%43",
+       1.29
+      ],
+      [
+       "Tony Harrington",
+       49,
+       3.76,
+       0.12,
+       0.29,
+       "%41",
+       1.36
+      ],
+      [
+       "Paul Tierney",
+       69,
+       3.72,
+       0.1,
+       0.16,
+       "%43",
+       1.18
+      ],
+      [
+       "Michael Oliver",
+       112,
+       3.65,
+       0.13,
+       0.19,
+       "%41",
+       1.15
+      ],
+      [
+       "Andy Madley",
+       92,
+       3.64,
+       0.12,
+       0.16,
+       "%43",
+       1.26
+      ]
+     ]
+    }
+   ]
+  }
+ ]
+}

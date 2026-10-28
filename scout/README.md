@@ -32,3 +32,14 @@ Scout sayfasındaki **🔮 Tahmin** sekmesi. Model tarayıcıda, ligin maçları
 - Korner ve kart: aynı güç modeli + negatif binom; kartta hakem çarpanı.
 - Karne: son 1 yılın her maçı yalnızca kendinden önceki verilerle tahmin edilir, bahis piyasasıyla (Brier) kıyaslanır.
 Ayarlar `AYAR` nesnesinde; veri arttıkça yeniden ayarlanmalı.
+
+## Bilgi tablosu (`scout/analiz/`)
+Scout sayfasındaki **📊 Analiz** sekmesi. Veri arttıkça yeniden üretilir:
+```
+python scout/analiz/veri_indir.py /tmp/pl 17
+python scout/analiz/pl_analiz.py /tmp/pl veri/scout_pl_analiz.json
+```
+İçerik: lig özeti, puanla ilişkili takım özellikleri (Pearson r), ilk yarı → ikinci yarı tahmin gücü, oyun tarzı kümeleri
+(k-means), maç dinamikleri (ilk gol, devre, kırmızı kart, dakika dağılımı), xG'ye göre beklenen puan (şans tablosu),
+oyuncu özellikleri (nota göre r, büyük/küçük takım oyuncuları Cohen d), oyuncu etkisi (oynadı/oynamadı), gençler, hakemler.
+Yaş eğrisi 10 sezon gelince eklenecek (4 sezonla sonuç gürültülü).
