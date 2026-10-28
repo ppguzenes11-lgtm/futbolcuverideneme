@@ -274,3 +274,4 @@ td span.oldu { font-weight: 800; text-decoration: underline; }
 .k-cip input { min-width: 0; width: auto; padding: 0; margin: 0; }
 .k-arti { color: #15803d; font-weight: 700; } .k-eksi { color: var(--negatif); font-weight: 700; }
 tr.secili-satir td { background: color-mix(in srgb, var(--vurgu) 10%, var(--kart)); }
+tr.formul-satir td { background: color-mix(in srgb, #eab308 12%, var(--kart)); }

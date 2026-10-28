@@ -77,3 +77,5 @@ Bozuk açılış oranları (çizgi değişince kalan) ayıklanır. Çıktı Anal
 ```
 python scout/analiz/arastirma.py /tmp/pl veri/scout_kupon_gecmis.json /tmp/pl/arastirma.json && cp /tmp/pl/arastirma_site.json veri/scout_arastirma.json
 ```
+Kazanan formülün dürüst (görmeden) olasılıkları `veri/scout_formul.json`'a yazılır (`arastirma.py` çıktısı `*_formul.json`);
+kupon simülatöründe "💰 Araştırmanın formülü" stratejisi ve "her uygun maça tek bahis" satırı bunu kullanır.

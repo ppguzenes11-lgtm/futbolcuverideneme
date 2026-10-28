@@ -715,9 +715,11 @@ async function analizGoster() {
 // Model olasılıkları maç oynanmadan önceki bilgilerle üretildi (scout/analiz/kupon_veri.py); sonuçlar sonradan açılır.
 // Her seçenek: [ad, model olasılığı, piyasa olasılığı (kapanış), açılış oranı, kapanış oranı, tuttu]
 let kuponVeri = null;
+let formulVeri = null;   // scout/analiz/arastirma.py: gol pazarlarında P(üst), yalnızca dürüst (görmeden) tahminler
 const KUPON_PAZAR = [['ms', 'Maç sonucu'], ['cs', 'Çifte şans'], ['iy', 'İlk yarı'], ['gol', 'Gol alt/üst'], ['kg', 'Karşılıklı gol'],
   ['korner', 'Korner'], ['kart', 'Kart'], ['ilkgol', 'İlk golü atan']];
 const STRATEJI = {
+  formul: '💰 Araştırmanın formülü (gol alt/üst, açılış oranı, %10+ değer)',
   birlesik: 'En yüksek tutma ihtimali (model + oranlar)',
   favori: 'Modelin favorileri',
   deger: 'Değerli seçimler (model × oran)',
@@ -734,27 +736,34 @@ function haftaAnahtari(t) {
 }
 
 /** Bir maçın seçilen pazarlardaki seçenekleri. pm: seçilen oran türünden, şirket payı çıkarılmış olasılık. */
-function secenekler(m, pazarlar, oranTur, enAz = 1) {
+function secenekler(m, pazarlar, oranTur, enAz = 1, formul = false) {
   const out = [];
+  const fm = formulVeri?.maclar?.[m.id];
   for (const [kat, pazarAd, sec] of m.pz) {
-    if (!pazarlar.has(kat)) continue;
+    if (formul ? !(kat === 'gol' && fm?.[pazarAd] != null) : !pazarlar.has(kat)) continue;
     const o = sec.map((s) => s[3 + oranTur]);
     const ters = o.reduce((a, x) => a + 1 / x, 0) / (kat === 'cs' ? 2 : 1);   // çifte şans seçenekleri örtüşür
-    sec.forEach((s, i) => out.push({ ad: s[0], pazar: pazarAd, p: s[1], pm: 1 / o[i] / ters, o: o[i], tuttu: !!s[5] }));
+    sec.forEach((s, i) => out.push({ ad: s[0], pazar: pazarAd, p: s[1], pm: 1 / o[i] / ters, o: o[i], tuttu: !!s[5],
+      pf: formul ? (i === 0 ? fm[pazarAd] : 1 - fm[pazarAd]) : null }));
   }
-  return out.filter((x) => x.o > 1 && x.o >= enAz);
+  return out.filter((x) => x.o > 1 && (formul || x.o >= enAz));
 }
 
-const puanla = (s, str) => (str === 'birlesik' ? (s.p + s.pm) / 2 : str === 'deger' ? s.p * s.o : s.p);
+const puanla = (s, str) => (str === 'formul' ? s.pf * s.o - 1 : str === 'birlesik' ? (s.p + s.pm) / 2 : str === 'deger' ? s.p * s.o : s.p);
 
 /** Bir haftadan kupon kurar. */
 function haftaKuponu(hafta, ayar, rnd = Math.random) {
   const adaylar = [];
+  const formul = ayar.strateji === 'formul';
   for (const m of hafta.maclar) {
-    const ss = secenekler(m, ayar.pazarlar, ayar.oran, ayar.enAz);
+    // Formül açılış oranlarıyla kuruldu; yalnızca en az %10 değer gördüğü gol alt/üst seçimleri oynanır
+    let ss = secenekler(m, ayar.pazarlar, formul ? 0 : ayar.oran, ayar.enAz, formul);
+    if (formul) ss = ss.filter((x) => puanla(x, 'formul') >= (formulVeri?.esik ?? 0.1));
     if (!ss.length) continue;
-    const sec = ayar.strateji === 'rastgele' ? ss[Math.floor(rnd() * ss.length)] : ss.reduce((a, b) => (puanla(b, ayar.strateji) > puanla(a, ayar.strateji) ? b : a));
-    adaylar.push({ m, sec, puan: ayar.strateji === 'rastgele' ? rnd() : puanla(sec, ayar.strateji) });
+    // Formül kuponda: değer gördüğü seçimler arasından en olasıyı alır (uç oranlar kuponu piyangoya çevirmesin)
+    const olcut = (x) => (formul ? x.pf : puanla(x, ayar.strateji));
+    const sec = ayar.strateji === 'rastgele' ? ss[Math.floor(rnd() * ss.length)] : ss.reduce((a, b) => (olcut(b) > olcut(a) ? b : a));
+    adaylar.push({ m, sec, puan: ayar.strateji === 'rastgele' ? rnd() : olcut(sec) });
   }
   adaylar.sort((a, b) => b.puan - a.puan);
   if (ayar.tip === 'sayi' && adaylar.length < ayar.sayi) return null;
@@ -767,7 +776,8 @@ function haftaKuponu(hafta, ayar, rnd = Math.random) {
   }
   if (!secilen.length) return null;
   const tuttu = secilen.every((a) => a.sec.tuttu);
-  return { hafta: hafta.anahtar, secilen, oran, sansi: secilen.reduce((x, a) => x * (a.sec.p + a.sec.pm) / 2, 1), tuttu, kazanc: tuttu ? ayar.para * oran : 0 };
+  const sansi = secilen.reduce((x, a) => x * (formul ? a.sec.pf : (a.sec.p + a.sec.pm) / 2), 1);
+  return { hafta: hafta.anahtar, secilen, oran, sansi, tuttu, kazanc: tuttu ? ayar.para * oran : 0 };
 }
 
 function kuponHaftalari() {
@@ -782,20 +792,24 @@ function kuponHaftalari() {
 const trHafta = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
 function kuponCiz(k, acik) {
-  if (!k) return '<div class="bilgi">Bu ayarlarla kupon kurulamadı. Maç sayısını düşürün ya da daha çok pazar seçin.</div>';
+  if (!k) {
+    return kuponAyar.strateji === 'formul'
+      ? '<div class="bilgi">Formül, bu maç sayısı için yeterli değerli seçim bulamadı. Formül haftada genelde birkaç bahis önerir; maç sayısını 1–2 yapın.</div>'
+      : '<div class="bilgi">Bu ayarlarla kupon kurulamadı. Maç sayısını düşürün ya da daha çok pazar seçin.</div>';
+  }
   const satir = (a, i) => {
     const m = a.m;
     const acildi = acik > i;
     return `<div class="k-satir ${acildi ? (a.sec.tuttu ? 'tuttu' : 'yatti') : ''}">
       <div class="k-mac"><b>${esc(m.e)} – ${esc(m.d)}</b><small>${esc(tarihAd(m.t))}</small></div>
-      <div class="k-sec"><span class="etiket">${esc(a.sec.ad)}</span><small>${esc(a.sec.pazar)} · model %${sayi(100 * a.sec.p)} · oranlara göre %${sayi(100 * a.sec.pm)}</small></div>
+      <div class="k-sec"><span class="etiket">${esc(a.sec.ad)}</span><small>${esc(a.sec.pazar)} · ${a.sec.pf != null ? `formül %${sayi(100 * a.sec.pf)} · değer +%${sayi(100 * (a.sec.pf * a.sec.o - 1))}` : `model %${sayi(100 * a.sec.p)}`} · oranlara göre %${sayi(100 * a.sec.pm)}</small></div>
       <div class="k-oran">${sayi(a.sec.o, 2)}</div>
       <div class="k-sonuc">${acildi ? `<b>${m.g[0]}–${m.g[1]}</b> ${a.sec.tuttu ? '✅' : '❌'}` : '<span class="soluk">?</span>'}</div>
     </div>`;
   };
   const bitti = acik >= k.secilen.length;
   return `<div class="kesfet-kart genis k-kupon">
-    <div class="k-ust"><b>${esc(trHafta(k.hafta))} haftasından ${k.secilen.length} maçlık kupon</b><span class="soluk">${esc(STRATEJI[kuponAyar.strateji])} · ${kuponAyar.oran ? 'maç saatindeki oranlar' : 'açılış oranları'}</span></div>
+    <div class="k-ust"><b>${esc(trHafta(k.hafta))} haftasından ${k.secilen.length} maçlık kupon</b><span class="soluk">${esc(STRATEJI[kuponAyar.strateji])} · ${kuponAyar.oran && kuponAyar.strateji !== 'formul' ? 'maç saatindeki oranlar' : 'açılış oranları'}</span></div>
     ${k.secilen.map(satir).join('')}
     <div class="k-alt">
       <div><small class="soluk">Toplam oran</small><b>${sayi(k.oran, 2)}</b></div>
@@ -830,11 +844,28 @@ function karsilastirCiz(ayar, haftalar) {
       <td class="sag"><b>%${sayi(100 * x.tut / (x.n || 1), 1)}</b></td><td class="sag">${sayi(x.oran, 2)}</td>
       <td class="sag"><span class="${net >= 0 ? 'k-arti' : 'k-eksi'}">${net >= 0 ? '+' : ''}${sayi(100 * net / (x.yat || 1), 1)} TL</span></td></tr>`;
   }).join('');
+  // Araştırmadaki gibi: formülün değer gördüğü her gol çizgisine tek bahis (kupon değil)
+  let tekN = 0, tekTut = 0, tekNet = 0;
+  for (const m of kuponVeri.maclar) {
+    const fm = formulVeri?.maclar?.[m.id];
+    if (!fm) continue;
+    for (const [kat, pazarAd, sec] of m.pz) {
+      if (kat !== 'gol' || fm[pazarAd] == null) continue;
+      const ev = [fm[pazarAd] * sec[0][3] - 1, (1 - fm[pazarAd]) * sec[1][3] - 1];
+      const i = ev[0] >= ev[1] ? 0 : 1;
+      if (ev[i] < (formulVeri.esik ?? 0.1)) continue;
+      tekN++; tekTut += sec[i][5]; tekNet += sec[i][5] ? sec[i][3] - 1 : -1;
+    }
+  }
+  const tekSatir = tekN ? `<tr class="formul-satir"><td><b>💰 Formül · her uygun maça tek bahis (kupon değil)</b></td><td class="sag">${sayi(tekN)} bahis</td>
+    <td class="sag"><b>%${sayi(100 * tekTut / tekN, 1)}</b></td><td class="sag">–</td>
+    <td class="sag"><span class="${tekNet >= 0 ? 'k-arti' : 'k-eksi'}">${tekNet >= 0 ? '+' : ''}${sayi(100 * tekNet / tekN, 1)} TL</span></td></tr>` : '';
   const kapsam = (ayar.tip === 'sayi' ? `${ayar.sayi} maçlık` : `hedef oranı ${ayar.hedef} olan`) + (ayar.enAz > 1 ? `, seçim başına en az ${sayi(ayar.enAz, 2)} oranlı` : '');
   return `<h2 class="kesfet-baslik">Stratejiler yarışıyor: ${esc(kapsam)} kuponlar, seçili pazarlar</h2>
     <div class="tablo-kaydir"><table><thead><tr><th>Strateji</th><th class="sag">Kupon</th><th class="sag">Tutma oranı</th><th class="sag">Ort. oran</th><th class="sag">100 TL başına</th></tr></thead>
-    <tbody>${satirlar}</tbody></table></div>
-    <p class="not">Geçmişteki her hafta için bir kupon kuruldu (her hafta yalnızca bir kez sayılır; rastgele strateji 20 kez denenip ortalandı).
+    <tbody>${tekSatir}${satirlar}</tbody></table></div>
+    <p class="not">Formül yalnızca Temmuz 2025'ten sonraki maçlarda (onları görmeden) tahmin yapabildiği için daha az haftada oynar; açılış oranlarını kullanır ve pazar seçimini dikkate almaz.
+      Geçmişteki her hafta için bir kupon kuruldu (her hafta yalnızca bir kez sayılır; rastgele strateji 20 kez denenip ortalandı).
       <b>Tutma oranını</b> en çok yükselten yöntem, modelin tahminini oranların gösterdiği olasılıkla birleştirmek. <b>Kâr</b> ise başka bir konu:
       bahis şirketinin payı her seçimde vardır; tüm maçlarda tek tek oynandığında her yöntem uzun vadede hafif zararda. Yüz küsur haftalık sonuçta
       birkaç şanslı hafta kârı büyük gösterebilir, bu yüzden "100 TL başına" sütununu kesin bir kanıt olarak okumayın.</p>`;
@@ -846,6 +877,7 @@ async function kuponGoster() {
   $('#ozet').innerHTML = '';
   try {
     kuponVeri ||= await fetch('veri/scout_kupon_gecmis.json', { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+    formulVeri ||= await fetch('veri/scout_formul.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   } catch (e) { return guncel(v) && bos(`Kupon verisi yüklenemedi: ${esc(e.message)}`); }
   if (!guncel(v)) return;
   const haftalar = kuponHaftalari();

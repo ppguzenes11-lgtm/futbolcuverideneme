@@ -295,3 +295,24 @@ def tr_ondalik(x):
 json.dump({'olusturuldu': datetime.now(timezone.utc).isoformat(timespec='minutes'), 'bolumler': [tr_ondalik(bolum)]},
           open(cikti_site, 'w'), ensure_ascii=False, indent=1)
 print('site bölümü', cikti_site)
+
+# ============================================================ Formülün maç maç olasılıkları (kupon simülatörü için)
+# Kazanan formül: gol alt/üst, açılış oranları, piyasa + model + maç bilgileri (lojistik regresyon), değer eşiği %10.
+# Yalnızca dürüst tahminler yazılır: doğrulama dönemi eğitimle, son sınav eğitim + doğrulamayla kurulan modelden.
+FORMUL_ESIK = 0.10
+rs_g = ikili_satirlar('gol')
+X_g = ikili_X(rs_g, 'acilis', True, ILGILI['gol'])
+y_g = np.array([r['y'] for r in rs_g])
+d_g = np.array([donem(r['t']) for r in rs_g])
+formul = defaultdict(dict)
+for kume, egitim_maske in (('dogrulama', d_g == 'egitim'), ('sinav', d_g != 'sinav')):
+    hedef = d_g == kume
+    if hedef.sum() == 0:
+        continue
+    P = egit_tahmin('lr', X_g[egitim_maske], y_g[egitim_maske], X_g[hedef])
+    for r, p in zip([r for r, h in zip(rs_g, hedef) if h], P):
+        formul[str(r['id'])][r['pazar']] = round(float(p[1]), 4)   # P(üst)
+formul_dosya = CIKTI.replace('.json', '_formul.json') if CIKTI.endswith('.json') else CIKTI + '_formul.json'
+json.dump({'aciklama': 'Gol alt/üst formülü: P(üst). Açılış oranlarıyla, değer eşiği %10.', 'esik': FORMUL_ESIK, 'maclar': formul},
+          open(formul_dosya, 'w'), separators=(',', ':'))
+print('formül olasılıkları', formul_dosya, sum(len(v) for v in formul.values()))
