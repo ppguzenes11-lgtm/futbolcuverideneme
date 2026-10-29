@@ -13,7 +13,8 @@
     { id: 37, ad: 'Eredivisie' },
   ];
   const ILK_SEZON = 2016; // 16/17
-  const BEKLEME = 500;    // istekler arası ms — siteyi yormamak için
+  const BEKLEME = 220;    // istekler arası en az ms; SofaScore yavaşla derse kendiliğinden artar
+  const AYNI_ANDA = 3;    // aynı anda çekilen maç sayısı
   const DENEME_MAC = 3;   // deneme modunda çekilecek maç sayısı
 
   if (!location.hostname.endsWith('sofascore.com')) {
@@ -27,7 +28,13 @@
   ekranKilidi();
   const deneme = !confirm('Tam çekim için TAMAM, 3 maçlık deneme için İPTAL düğmesine basın.');
 
-  const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Zamanlayıcı ayrı bir işçide (Web Worker) çalışır: Chrome arka plandaki ya da ekranı kapalı sekmede normal
+  // zamanlayıcıları dakikada bire kadar yavaşlatır, işçidekileri yavaşlatmaz. Kod bu yüzden "duruyor" gibi görünüyordu.
+  const isci = new Worker(URL.createObjectURL(new Blob(['onmessage=(e)=>setTimeout(()=>postMessage(e.data[0]),e.data[1])'], { type: 'text/javascript' })));
+  const bekleyen = new Map();
+  let bekleNo = 0;
+  isci.onmessage = (e) => { bekleyen.get(e.data)?.(); bekleyen.delete(e.data); };
+  const bekle = (ms) => new Promise((r) => { const n = ++bekleNo; bekleyen.set(n, r); isci.postMessage([n, ms]); });
   const sayiMi = (v) => typeof v === 'number' && Number.isFinite(v);
   const tarih = (ts) => (sayiMi(ts) ? new Date(ts * 1000).toISOString() : null);
   // '99/00' → 1999, '16/17' → 2016
@@ -88,24 +95,33 @@
 
   // ---------- SofaScore ----------
   class Durdur extends Error {}
+  // Hız sınırlayıcı: istekler arasında en az "aralik" ms. SofaScore 403/429 derse aralık büyür, istekler geçtikçe küçülür.
+  let aralik = BEKLEME, sonIstek = 0, engelSayac = 0;
+  async function sira() {
+    const simdi = Date.now();
+    const bekleme = Math.max(0, sonIstek + aralik - simdi);
+    sonIstek = Math.max(simdi, sonIstek + aralik);
+    if (bekleme) await bekle(bekleme);
+  }
   async function al(yol, { yoksaNull = false } = {}) {
     for (let deneme = 1; ; deneme++) {
-      await bekle(BEKLEME);
+      await sira();
       const r = await agIstek('/api/v1/' + yol);
-      if (r.ok) return r.json();
+      if (r.ok) { aralik = Math.max(BEKLEME, aralik * 0.98); engelSayac = 0; return r.json(); }
       if (r.status === 404) {
         if (yoksaNull) return null;
         throw new Error('404 ' + yol);
       }
-      if ((r.status === 403 || r.status === 429) && deneme < 6) {
-        const sn = 60 * deneme;
-        console.warn(`SofaScore ${r.status} verdi (çok hızlı istek olabilir). ${sn} sn bekleniyor…`);
-        await bekle(sn * 1000);
+      if (r.status === 403 || r.status === 429) {
+        // Vazgeçmez: önce yavaşlar, üst üste engellenirse giderek uzun bekler (en çok 15 dk), sonra devam eder
+        engelSayac++;
+        aralik = Math.min(3000, aralik * 2);
+        const dk = Math.min(15, engelSayac);
+        console.warn(`SofaScore ${r.status} verdi; yavaşlıyorum. ${dk} dk beklenip devam edilecek…`);
+        await bekle(dk * 60000);
         continue;
       }
-      if (r.status === 403 || r.status === 429) {
-        throw new Durdur(`SofaScore erişimi engelledi (${r.status}). Birkaç saat sonra kodu tekrar çalıştırın; kaldığı yerden devam eder.`);
-      }
+      if (deneme < 4) { await bekle(5000 * deneme); continue; }
       throw new Error(`${r.status} ${yol}`);
     }
   }
@@ -140,14 +156,8 @@
 
   // ---------- Bir maç ----------
   async function macCek(lig, sezon, ev) {
-    const [detay, ist, kadro, olay, hoca, oranlar] = [
-      await al(`event/${ev.id}`, { yoksaNull: true }),
-      await al(`event/${ev.id}/statistics`, { yoksaNull: true }),
-      await al(`event/${ev.id}/lineups`, { yoksaNull: true }),
-      await al(`event/${ev.id}/incidents`, { yoksaNull: true }),
-      await al(`event/${ev.id}/managers`, { yoksaNull: true }),
-      await al(`event/${ev.id}/odds/1/all`, { yoksaNull: true }),
-    ];
+    const [detay, ist, kadro, olay, hoca, oranlar] = await Promise.all(
+      ['', '/statistics', '/lineups', '/incidents', '/managers', '/odds/1/all'].map((u) => al(`event/${ev.id}${u}`, { yoksaNull: true })));
     const d = detay?.event ?? ev;
 
     // Takım istatistikleri: {ALL: {cornerKicks: [ev, dep], accuratePasses: [ev, dep, evToplam, depToplam]}, 1ST: …, 2ND: …}
@@ -195,9 +205,10 @@
     }
 
     // Yeni oyuncuların kimlik bilgisi (her oyuncu için bir kez)
+    const profilVeri = await Promise.all([...yeniOyuncu.keys()].map((id) => al(`player/${id}`, { yoksaNull: true })));
     const profiller = [];
-    for (const [id, p] of yeniOyuncu) {
-      const pr = (await al(`player/${id}`, { yoksaNull: true }))?.player ?? p;
+    for (const [k, [id, p]] of [...yeniOyuncu].entries()) {
+      const pr = profilVeri[k]?.player ?? p;
       profiller.push({
         id, ad: pr.name ?? p.name, kisa_ad: pr.shortName ?? p.shortName ?? null, mevki: pr.position ?? p.position ?? null,
         dogum: gun(pr.dateOfBirthTimestamp ?? p.dateOfBirthTimestamp), ulke: pr.country?.name ?? p.country?.name ?? null,
@@ -205,9 +216,11 @@
       });
     }
 
-    await sbYaz('ss_takimlar', [ev.homeTeam, ev.awayTeam].map((t) => ({ id: t.id, ad: t.name, kisa_ad: t.shortName ?? null })), { cakisma: 'id' });
-    await sbYaz('ss_oyuncular', profiller, { cakisma: 'id', sadeceYeni: true });
-    await sbYaz('ss_oyuncu_mac', tekil(oyuncuSatir, (r) => r.oyuncu_id), { cakisma: 'mac_id,oyuncu_id' });
+    await Promise.all([
+      sbYaz('ss_takimlar', [ev.homeTeam, ev.awayTeam].map((t) => ({ id: t.id, ad: t.name, kisa_ad: t.shortName ?? null })), { cakisma: 'id' }),
+      sbYaz('ss_oyuncular', profiller, { cakisma: 'id', sadeceYeni: true }),
+      sbYaz('ss_oyuncu_mac', tekil(oyuncuSatir, (r) => r.oyuncu_id), { cakisma: 'mac_id,oyuncu_id' }),
+    ]);
     // Maç satırı en son yazılır: varsa maç tamamen çekilmiş demektir.
     const hk = (m) => (m ? { id: m.id, ad: m.name } : null);
     await sbYaz('ss_maclar', [{
@@ -281,55 +294,91 @@
       }
       console.log(`%cFikstür güncellendi: ${n} yaklaşan maç${oranSutunu ? ` (${m} maçın oranı alındı)` : ''}`, 'color:#2563eb');
     } catch (e) {
-      if (e instanceof Durdur) throw e;
       console.warn('Fikstür güncellenemedi (scout/supabase/fikstur.sql çalıştırıldı mı?):', e.message);
     }
   }
 
   // ---------- Ana döngü ----------
-  let toplam = 0;
+  // Sezonlar liglere karışık ve yeniden eskiye çekilir (26/27'nin üç ligi, sonra 25/26'nın üç ligi…): her ligin yakın
+  // sezonları erken gelir. Bir maçta hata olursa çekim durmaz; o maç sona bırakılıp yeniden denenir.
+  let toplam = 0, hata = 0;
   const baslangic = Date.now();
-  let sonFikstur = Date.now();
-  try {
-    await fiksturGuncelle();
-    for (const lig of LIGLER) {
-      const sezonlar = (await al(`unique-tournament/${lig.id}/seasons`)).seasons
-        .filter((s) => /^\d\d\/\d\d$/.test(s.year) && sezonYili(s.year) >= ILK_SEZON)
-        .sort((a, b) => sezonYili(b.year) - sezonYili(a.year)); // en yeni sezon önce
-      for (const sezon of sezonlar) {
+  let sonFikstur = 0;
+  const fiksturZamani = async () => {
+    if (Date.now() - sonFikstur > 3 * 3600000) { sonFikstur = Date.now(); await fiksturGuncelle(); }
+  };
+  const durum = () => {
+    const dk = Math.max(1, Math.round((Date.now() - baslangic) / 60000));
+    return `bu oturumda ${toplam} maç, ${dk} dk (dakikada ${(toplam / dk).toFixed(1)} maç)${hata ? `, ${hata} hata (sona bırakıldı)` : ''}`;
+  };
+  async function maclariCek(lig, sezon, liste) {
+    const kuyruk = [...liste];
+    const tekrar = [];
+    const isle = async () => {
+      for (let ev = kuyruk.shift(); ev; ev = kuyruk.shift()) {
+        await fiksturZamani();
+        try {
+          const s = await macCek(lig, sezon, ev);
+          toplam++;
+          console.log(`✓ ${ev.homeTeam.name} ${ev.homeScore?.current}-${ev.awayScore?.current} ${ev.awayTeam.name} — ${s.oyuncu} oyuncu, ${s.oran} oran  (${durum()})`);
+          if (toplam % 300 === 0) { console.clear(); console.log(`%cKonsol temizlendi (yavaşlamasın diye). ${durum()}`, 'color:#2563eb'); }
+        } catch (e) {
+          hata++;
+          tekrar.push(ev);
+          console.warn(`Maç atlandı, sonra tekrar denenecek: ${ev.homeTeam.name} – ${ev.awayTeam.name} (${e.message})`);
+        }
+        if (deneme && toplam >= DENEME_MAC) return;
+      }
+    };
+    await Promise.all(Array.from({ length: AYNI_ANDA }, isle));
+    return tekrar;
+  }
+
+  for (let tur = 1; ; tur++) {
+    try {
+      if (deneme) {
+        const lig = LIGLER[0];
+        const sz = await guncelSezon(lig);
+        const kalan = (await sezonMaclari(lig, sz)).filter((m) => !bitenMaclar.has(m.id)).slice(0, DENEME_MAC);
+        await maclariCek(lig, sz, kalan);
+        console.log('%cDENEME BAŞARILI ✅ Veriler veritabanına yazıldı. Tam çekim için kodu tekrar yapıştırıp TAMAM\'a basın.', 'font-weight:bold;color:#16a34a');
+        return;
+      }
+      await fiksturZamani();
+      const isler = [];
+      for (const lig of LIGLER) {
+        const sezonlar = (await al(`unique-tournament/${lig.id}/seasons`)).seasons
+          .filter((s) => /^\d\d\/\d\d$/.test(s.year) && sezonYili(s.year) >= ILK_SEZON);
+        sezonlar.forEach((sezon) => isler.push({ lig, sezon }));
+      }
+      isler.sort((a, b) => sezonYili(b.sezon.year) - sezonYili(a.sezon.year) || LIGLER.indexOf(a.lig) - LIGLER.indexOf(b.lig));
+      let geriKalan = [];
+      for (const { lig, sezon } of isler) {
         const maclar = await sezonMaclari(lig, sezon);
         const kalan = maclar.filter((m) => !bitenMaclar.has(m.id));
         console.log(`%c${lig.ad} ${sezon.year}: ${maclar.length} bitmiş maç, ${kalan.length} çekilecek`, 'font-weight:bold;color:#2563eb');
-        for (const ev of kalan) {
-          if (Date.now() - sonFikstur > 3 * 3600000) { await fiksturGuncelle(); sonFikstur = Date.now(); }
-          const s = await macCek(lig, sezon, ev);
-          toplam++;
-          const dk = Math.round((Date.now() - baslangic) / 60000);
-          console.log(`✓ ${ev.homeTeam.name} ${ev.homeScore?.current}-${ev.awayScore?.current} ${ev.awayTeam.name} — ${s.oyuncu} oyuncu, ${s.istSayisi} takım ist., ${s.oran} oran  (bu oturumda ${toplam} maç, ${dk} dk)`);
-          if (deneme && toplam >= DENEME_MAC) {
-            console.log('%cDENEME BAŞARILI ✅ Veriler veritabanına yazıldı. Tam çekim için kodu tekrar yapıştırıp TAMAM\'a basın.', 'font-weight:bold;color:#16a34a');
-            return;
-          }
-        }
+        const t = await maclariCek(lig, sezon, kalan);
+        geriKalan.push(...t.map((ev) => ({ lig, sezon, ev })));
       }
-    }
-    console.log('%cTAMAMLANDI ✅ Tüm ligler ve sezonlar çekildi. Sayfa açık kaldıkça takip sürer: 3 saatte bir yeni biten maçlar ve yaklaşan maçların oranları alınır.', 'font-weight:bold;color:#16a34a');
-    // ---------- Takip: yeni biten maçlar + fikstür/oranlar ----------
-    for (;;) {
-      await bekle(Math.max(0, 3 * 3600000 - (Date.now() - sonFikstur)));
-      for (const lig of LIGLER) {
-        const sz = await guncelSezon(lig);
-        const son = (await al(`unique-tournament/${lig.id}/season/${sz.id}/events/last/0`, { yoksaNull: true }))?.events ?? [];
-        for (const ev of son.filter((x) => x.status?.type === 'finished' && !bitenMaclar.has(x.id))) {
-          const s = await macCek(lig, sz, ev);
-          console.log(`✓ (takip) ${ev.homeTeam.name} ${ev.homeScore?.current}-${ev.awayScore?.current} ${ev.awayTeam.name} — ${s.oran} oran`);
-        }
+      // Hatalı maçlar: bir kez daha
+      for (const { lig, sezon, ev } of geriKalan) {
+        try { await macCek(lig, sezon, ev); toplam++; } catch (e) { console.warn('Yine olmadı, sonraki turda denenecek:', ev.id, e.message); }
       }
-      await fiksturGuncelle();
-      sonFikstur = Date.now();
+      console.log(`%cTAMAMLANDI ✅ Bütün ligler ve sezonlar çekildi (${durum()}). Sayfa açık kaldıkça takip sürer: 3 saatte bir yeni biten maçlar ve yaklaşan maçların oranları alınır.`, 'font-weight:bold;color:#16a34a');
+      // ---------- Takip: yeni biten maçlar + fikstür/oranlar ----------
+      for (;;) {
+        await bekle(Math.max(60000, 3 * 3600000 - (Date.now() - sonFikstur)));
+        for (const lig of LIGLER) {
+          const sz = await guncelSezon(lig);
+          const son = (await al(`unique-tournament/${lig.id}/season/${sz.id}/events/last/0`, { yoksaNull: true }))?.events ?? [];
+          await maclariCek(lig, sz, son.filter((x) => x.status?.type === 'finished' && !bitenMaclar.has(x.id)));
+        }
+        await fiksturZamani();
+      }
+    } catch (e) {
+      // Beklenmedik hata: çekim durmaz, 1 dakika sonra kaldığı yerden yeniden başlar
+      console.error(`Hata (${tur}. tur) — 1 dakika sonra kaldığı yerden devam edilecek:`, e);
+      await bekle(60000);
     }
-  } catch (e) {
-    if (e instanceof Durdur) console.error(e.message);
-    else console.error('Hata — kodu tekrar çalıştırın, kaldığı yerden devam eder:', e);
   }
 })();
