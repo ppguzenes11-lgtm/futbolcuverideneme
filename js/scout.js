@@ -725,7 +725,8 @@ const STRATEJI = {
   deger: 'Değerli seçimler (model × oran)',
   rastgele: 'Rastgele (kıyas için)',
 };
-const kuponAyar = { para: 100, tip: 'sayi', sayi: 3, hedef: 5, strateji: 'birlesik', pazarlar: new Set(KUPON_PAZAR.map(([k]) => k)), oran: 1, enAz: 1.3 };
+const kuponAyar = { para: 100, tip: 'sayi', sayi: 3, hedef: 5, strateji: 'birlesik', pazarlar: new Set(KUPON_PAZAR.map(([k]) => k)), oran: 1, enAz: 1.3, kaynak: 'karisik' };
+const kullanilan = new Set();   // simülatörde son kuponlarda çıkan maçlar
 let sonKupon = null;
 const tl = (x) => `${Number(x).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TL`;
 
@@ -752,7 +753,7 @@ function secenekler(m, pazarlar, oranTur, enAz = 1, formul = false) {
 const puanla = (s, str) => (str === 'formul' ? s.pf * s.o - 1 : str === 'birlesik' ? (s.p + s.pm) / 2 : str === 'deger' ? s.p * s.o : s.p);
 
 /** Bir haftadan kupon kurar. */
-function haftaKuponu(hafta, ayar, rnd = Math.random) {
+function haftaKuponu(hafta, ayar, rnd = Math.random, karisik = false) {
   const adaylar = [];
   const formul = ayar.strateji === 'formul';
   for (const m of hafta.maclar) {
@@ -764,8 +765,10 @@ function haftaKuponu(hafta, ayar, rnd = Math.random) {
     const olcut = (x) => (formul ? x.pf : puanla(x, ayar.strateji));
     const sec = ayar.strateji === 'rastgele' ? ss[Math.floor(rnd() * ss.length)] : ss.reduce((a, b) => (olcut(b) > olcut(a) ? b : a));
     adaylar.push({ m, sec, puan: ayar.strateji === 'rastgele' ? rnd() : olcut(sec) });
+    // Karışık modda maçlar zaten rastgele sırada gelir: strateji yalnızca maç içindeki seçimi belirler
+    if (karisik && adaylar.length >= (ayar.tip === 'sayi' ? ayar.sayi : 40)) break;
   }
-  adaylar.sort((a, b) => b.puan - a.puan);
+  if (!karisik) adaylar.sort((a, b) => b.puan - a.puan);
   if (ayar.tip === 'sayi' && adaylar.length < ayar.sayi) return null;
   const secilen = [];
   let oran = 1;
@@ -809,7 +812,7 @@ function kuponCiz(k, acik) {
   };
   const bitti = acik >= k.secilen.length;
   return `<div class="kesfet-kart genis k-kupon">
-    <div class="k-ust"><b>${esc(trHafta(k.hafta))} haftasından ${k.secilen.length} maçlık kupon</b><span class="soluk">${esc(STRATEJI[kuponAyar.strateji])} · ${kuponAyar.oran && kuponAyar.strateji !== 'formul' ? 'maç saatindeki oranlar' : 'açılış oranları'}</span></div>
+    <div class="k-ust"><b>${k.hafta ? `${esc(trHafta(k.hafta))} haftasından ${k.secilen.length} maçlık kupon` : `Rastgele ${k.secilen.length} maçlık kupon`}</b><span class="soluk">${esc(STRATEJI[kuponAyar.strateji])} · ${kuponAyar.oran && kuponAyar.strateji !== 'formul' ? 'maç saatindeki oranlar' : 'açılış oranları'}</span></div>
     ${k.secilen.map(satir).join('')}
     <div class="k-alt">
       <div><small class="soluk">Toplam oran</small><b>${sayi(k.oran, 2)}</b></div>
@@ -1000,6 +1003,7 @@ async function kuponGoster() {
         kuponu kurunca sonuçlar açılır. Gerçek para değildir, modelin gücünü görmek içindir. Korner, kart ve diğer pazarların oranları 2024/25'ten beri var.</p>
       <div class="arac k-ayar">
         <label class="alan"><span>Bahis (TL)</span><input id="k-para" type="number" min="1" step="10" value="${a.para}"></label>
+        <label class="alan"><span>Maçlar</span><select id="k-kaynak"><option value="karisik">Bütün maçlardan rastgele</option><option value="hafta">Aynı haftadan</option></select></label>
         <label class="alan"><span>Kupon</span><select id="k-tip"><option value="sayi">Maç sayısına göre</option><option value="hedef">Hedef orana göre</option></select></label>
         <label class="alan" id="k-sayi-alan"><span>Maç sayısı</span><select id="k-sayi">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<option>${n}</option>`).join('')}</select></label>
         <label class="alan" id="k-hedef-alan"><span>Hedef oran</span><select id="k-hedef">${[2, 3, 5, 10, 20, 50, 100].map((n) => `<option>${n}</option>`).join('')}</select></label>
@@ -1014,14 +1018,14 @@ async function kuponGoster() {
   const ayarOku = () => {
     a.para = Math.max(1, Number($('#k-para').value) || 100);
     a.tip = $('#k-tip').value; a.sayi = +$('#k-sayi').value; a.hedef = +$('#k-hedef').value;
-    a.strateji = $('#k-strateji').value; a.oran = +$('#k-oran').value; a.enAz = +$('#k-enaz').value;
+    a.strateji = $('#k-strateji').value; a.oran = +$('#k-oran').value; a.enAz = +$('#k-enaz').value; a.kaynak = $('#k-kaynak').value;
     a.pazarlar = new Set([...document.querySelectorAll('.k-pazarlar input:checked')].map((x) => x.value));
     $('#k-sayi-alan').style.display = a.tip === 'sayi' ? '' : 'none';
     $('#k-hedef-alan').style.display = a.tip === 'hedef' ? '' : 'none';
   };
   kuponModBagla();
   $('#k-tip').value = a.tip; $('#k-sayi').value = a.sayi; $('#k-hedef').value = a.hedef;
-  $('#k-strateji').value = a.strateji; $('#k-oran').value = a.oran; $('#k-enaz').value = String(a.enAz);
+  $('#k-strateji').value = a.strateji; $('#k-oran').value = a.oran; $('#k-enaz').value = String(a.enAz); $('#k-kaynak').value = a.kaynak;
   ayarOku();
   $('#icerik').querySelectorAll('.k-ayar select, .k-ayar input, .k-pazarlar input').forEach((x) => x.addEventListener('change', ayarOku));
   const goster = (acik) => {
@@ -1035,10 +1039,19 @@ async function kuponGoster() {
   $('#k-olustur').addEventListener('click', () => {
     ayarOku();
     if (!a.pazarlar.size) return toastYok();
-    // Kurulabilen bir hafta bulunana kadar rastgele hafta dene
     sonKupon = null;
-    const karisik = [...haftalar].sort(() => Math.random() - 0.5);
-    for (const h of karisik) { sonKupon = haftaKuponu(h, a); if (sonKupon) break; }
+    if (a.kaynak === 'karisik') {
+      // Bütün maçlardan rastgele: son kuponlarda çıkan maçlar bir süre tekrar gelmez
+      let havuz = kuponVeri.maclar.filter((m) => !kullanilan.has(m.id));
+      if (havuz.length < kuponVeri.maclar.length * 0.3) { kullanilan.clear(); havuz = [...kuponVeri.maclar]; }
+      for (let i = havuz.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [havuz[i], havuz[j]] = [havuz[j], havuz[i]]; }
+      sonKupon = haftaKuponu({ anahtar: null, maclar: havuz }, a, Math.random, true);
+      sonKupon?.secilen.forEach((x) => kullanilan.add(x.m.id));
+    } else {
+      // Kurulabilen bir hafta bulunana kadar rastgele hafta dene
+      const karisik = [...haftalar].sort(() => Math.random() - 0.5);
+      for (const h of karisik) { sonKupon = haftaKuponu(h, a); if (sonKupon) break; }
+    }
     goster(0);
   });
   const toastYok = () => { $('#k-alan').innerHTML = '<div class="bilgi">En az bir pazar seçin.</div>'; };
