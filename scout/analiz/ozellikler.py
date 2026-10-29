@@ -85,6 +85,11 @@ TARZ_OLCU = {'uzun_pay': 12, 'orta': 17, 'ppda': 12.5, 'hava': 34, 'faul': 10.5,
              'uzak_pay': 38, 'sut_f': 12.5, 'sut_a': 12.5, 'pos_l': 50}
 tarz = defaultdict(lambda: {k: EW(12, v) for k, v in TARZ_OLCU.items()})
 hakem_kart = defaultdict(lambda: EW(15, 4.1))
+# Taktik ve bağlam: teknik direktör, diziliş, puan durumu
+hoca = {}                                            # takım → (hoca id, o hocayla oynanan maç)
+dizilis_def = defaultdict(lambda: EW(4, 4.0))        # son maçlardaki savunma sayısı (3'lü/4'lü/5'li)
+dizilis_fv = defaultdict(lambda: EW(4, 1.6))         # forvet sayısı
+tablo = defaultdict(lambda: [0, 0, 0])               # (sezon, takım) → [puan, maç, averaj]
 hakem_pen = defaultdict(lambda: EW(15, 0.25))
 
 
@@ -238,6 +243,25 @@ def ozellik_hesapla(m, g):
     dc = dc_tahmin(dc_onbellek[int(g)], e, d) if dc_onbellek[int(g)] else None
     if dc:
         f['dc_p1'], f['dc_px'], f['dc_p2'], f['dc_lev'], f['dc_ldep'] = dc
+    # --- taktik ve bağlam
+    for t, on, hk_ in ((e, 'ev', m.get('ev_hoca')), (d, 'dep', m.get('dep_hoca'))):
+        hid = (hk_ or {}).get('id')
+        onceki = hoca.get(t)
+        n_ = onceki[1] if onceki and (hid is None or onceki[0] == hid) else 0
+        f[f'hoca_mac_{on}'] = min(n_, 30) / 30
+        f[f'hoca_yeni_{on}'] = 1.0 if n_ < 6 else 0.0
+        f[f'savunma_{on}'] = dizilis_def[t].v
+        f[f'forvet_{on}'] = dizilis_fv[t].v
+    sz = m.get('sezon')
+    puanlar = sorted(((v[0], v[2]) for (s_, _), v in tablo.items() if s_ == sz), reverse=True)
+    for t, on in ((e, 'ev'), (d, 'dep')):
+        pu, mc, av = tablo[(sz, t)]
+        f[f'ppg_sezon_{on}'] = pu / mc if mc else 1.37
+        f[f'sira_{on}'] = (1 + sum(1 for x in puanlar if x > (pu, av))) if mc else 10
+    f['sira_fark'] = f['sira_ev'] - f['sira_dep']
+    f['sezon_ilerleme'] = min((m.get('hafta') or 19) / 38, 1)
+    # sezon sonu, ortada kalan takımlar (ne Avrupa ne düşme derdi)
+    f['motivasyonsuz'] = float(f['sezon_ilerleme'] > 0.8 and 8 <= f['sira_ev'] <= 15 and 8 <= f['sira_dep'] <= 15)
     return f
 
 
@@ -289,6 +313,16 @@ for m in MACLAR:
         if xi:
             takim_11[t].ekle(float(np.mean(xi)))
     h2h[frozenset((e, d))].append((e, ge, gd))
+    for t, hk_, dz in ((e, m.get('ev_hoca'), m.get('ev_dizilis')), (d, m.get('dep_hoca'), m.get('dep_dizilis'))):
+        hid = (hk_ or {}).get('id')
+        if hid is not None:
+            hoca[t] = (hid, hoca[t][1] + 1 if t in hoca and hoca[t][0] == hid else 1)
+        parca = [int(x) for x in str(dz or '').split('-') if x.isdigit()]
+        if len(parca) >= 3:
+            dizilis_def[t].ekle(parca[0]); dizilis_fv[t].ekle(parca[-1])
+    for t, a, b in ((e, ge, gd), (d, gd, ge)):
+        v = tablo[(m['sezon'], t)]
+        v[0] += 3 if a > b else 1 if a == b else 0; v[1] += 1; v[2] += a - b
     ic_form[e].ekle(3 if ge > gd else 1 if ge == gd else 0)
     dis_form[d].ekle(3 if gd > ge else 1 if ge == gd else 0)
     for t, i in ((e, 0), (d, 1)):
