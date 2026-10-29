@@ -813,6 +813,7 @@ function kuponCiz(k, acik) {
   const bitti = acik >= k.secilen.length;
   return `<div class="kesfet-kart genis k-kupon">
     <div class="k-ust"><b>${k.hafta ? `${esc(trHafta(k.hafta))} haftasından ${k.secilen.length} maçlık kupon` : `Rastgele ${k.secilen.length} maçlık kupon`}</b><span class="soluk">${esc(STRATEJI[kuponAyar.strateji])} · ${kuponAyar.oran && kuponAyar.strateji !== 'formul' ? 'maç saatindeki oranlar' : 'açılış oranları'}</span></div>
+    ${!k.hafta && kuponAyar.strateji === 'formul' ? '<p class="not" style="margin:0 0 8px">Formül yalnızca Temmuz 2025 sonrası maçlardan seçebilir: gol oranları 2024/25\'ten beri var ve formülün bir maçı görmeden tahmin edebilmesi için önce bir sezon öğrenmesi gerekiyor. Diğer stratejiler 2018\'den bu yana bütün maçlardan seçer.</p>' : ''}
     ${k.secilen.map(satir).join('')}
     <div class="k-alt">
       <div><small class="soluk">Toplam oran</small><b>${sayi(k.oran, 2)}</b></div>
